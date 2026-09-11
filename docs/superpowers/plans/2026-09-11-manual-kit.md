@@ -876,7 +876,7 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
   - `interface ManualContextValue { strings: UiStrings; resolveMedia: (src: string) => string | undefined }`
   - `const ManualProvider: ComponentType<{ value: ManualContextValue; children: ReactNode }>`
   - `function useManual(): ManualContextValue` — throws outside a provider
-  - `function createMediaResolver(media: Record<string, string> | undefined, contentBase?: string): (src: string) => string | undefined`
+  - `function createMediaResolver(media: Record<string, string> | undefined): (src: string) => string | undefined` — one parameter only; matching on the `/media/` segment boundary is precisely what removes the need for a base path
 
 Blocks need two ambient things: the reader's strings and a way to turn `media/kaspi-qr.svg` into a bundled URL. Threading both through `BlockProps` would put them in every custom block's signature whether it wants them or not, so they come from context. `resolveAnchor` stays a prop, because it is route-dependent and a block may be rendered outside a route (search snippets, tests).
 
