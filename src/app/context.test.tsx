@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ManualProvider, createMediaResolver, useManual } from './context';
 import { BUILTIN_STRINGS } from './strings';
@@ -28,7 +28,15 @@ describe('useManual', () => {
   });
 
   it('throws outside a provider, rather than rendering a broken shell', () => {
-    expect(() => render(<Probe />)).toThrow(/ManualProvider/);
+    // React logs the render error to console.error before it propagates. The
+    // throw is the assertion; the stack dump is noise that would train a reader
+    // to skim past real warnings.
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      expect(() => render(<Probe />)).toThrow(/ManualProvider/);
+    } finally {
+      error.mockRestore();
+    }
   });
 });
 

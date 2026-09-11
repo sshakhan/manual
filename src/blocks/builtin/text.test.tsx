@@ -95,10 +95,15 @@ describe('steps', () => {
 describe('schemas', () => {
   it('each names its own type and nothing else', () => {
     for (const spec of [headingBlock, paragraphBlock, listBlock, stepsBlock]) {
-      const properties = spec.schema.properties as Record<string, { const?: string }>;
-      expect(properties.type?.const, spec.type).toBe(spec.type);
-      expect(spec.schema.additionalProperties).toBe(false);
-      expect(spec.schema.required).toContain('type');
+      // One matcher rather than three reads plus a cast: `schema` is
+      // `Record<string, unknown>` by design, since the library deliberately does
+      // not model JSON Schema, and `toMatchObject` asserts into it without pretending to
+      // know its shape.
+      expect(spec.schema, spec.type).toMatchObject({
+        additionalProperties: false,
+        required: expect.arrayContaining(['type']),
+        properties: { type: { const: spec.type } },
+      });
     }
   });
 });
