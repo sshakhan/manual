@@ -3033,8 +3033,13 @@ describe('SearchBox', () => {
   it('shows results for a real query', async () => {
     setup();
     await userEvent.type(screen.getByRole('searchbox'), 'QR');
-    expect(screen.getAllByRole('button').length).toBeGreaterThan(0);
-    expect(screen.getByText(/Оплата/)).toBeDefined();
+    // Both the heading and the paragraph below it match «QR», so there are two
+    // hits and `getByText` would be ambiguous. Assert the shape of the first
+    // instead: a hit names where it lands, chapter then section.
+    const hits = screen.getAllByRole('button');
+    expect(hits.length).toBeGreaterThan(0);
+    expect(hits[0]?.textContent).toContain('Оплата');
+    expect(hits[0]?.textContent).toContain('Kaspi QR');
   });
 
   it('reports an empty result set', async () => {
@@ -3048,7 +3053,9 @@ describe('SearchBox', () => {
     await userEvent.type(screen.getByRole('searchbox'), 'Покажите');
     await userEvent.click(screen.getAllByRole('button')[0]!);
     expect(onNavigate).toHaveBeenCalledWith({ locale: 'ru', chapterId: 'payment', sectionId: 'qr' });
-    expect(screen.getByRole('searchbox')).toHaveValue('');
+    // `toHaveValue` is a jest-dom matcher and jest-dom is not a dependency
+    // here; the typed getter reads the same and needs no cast.
+    expect(screen.getByRole<HTMLInputElement>('searchbox').value).toBe('');
   });
 
   it('renders the renderSearchEmpty slot instead of the default message', async () => {
