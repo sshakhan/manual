@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { AnyBlock } from '../content/types';
+import { isLocaleOf, type AnyBlock } from '../content/types';
 import type { ResolvedConfig } from '../config';
 import { parseHash, routeHref, type Route } from './route';
 
@@ -20,7 +20,8 @@ function storedLocale<L extends string>(
 ): L {
   try {
     const value = window.localStorage.getItem(key);
-    return value && (locales as readonly string[]).includes(value) ? (value as L) : fallback;
+    const isLocale = isLocaleOf(locales);
+    return value && isLocale(value) ? value : fallback;
   } catch {
     return fallback;
   }
