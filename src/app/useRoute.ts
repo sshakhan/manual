@@ -3,15 +3,6 @@ import { isLocaleOf, type AnyBlock } from '../content/types';
 import type { ResolvedConfig } from '../config';
 import { parseHash, routeHref, type Route } from './route';
 
-/** Per manual, so two manuals open in one browser do not fight over the reader's language. */
-function localeStorageKey(brand: ResolvedConfig<string, AnyBlock>['brand']): string {
-  const slug =
-    typeof brand === 'string'
-      ? brand.toLowerCase().replace(/[^a-z0-9]+/g, '-')
-      : 'default';
-  return `manual-kit:locale:${slug}`;
-}
-
 /** The remembered locale, or the fallback. `localStorage` can throw — treat as absent. */
 function storedLocale<L extends string>(
   key: string,
@@ -58,7 +49,7 @@ export function useRoute<L extends string, B extends AnyBlock>(
 } {
   const { locales, routing } = config;
   const firstChapterId = config.content.chapterList()[0]?.id ?? '';
-  const key = localeStorageKey(config.brand);
+  const key = config.storageKey;
 
   const [route, setRoute] = useState<Route<L>>(() => {
     if (routing === 'memory') {

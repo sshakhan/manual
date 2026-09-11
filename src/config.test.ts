@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { createElement } from 'react';
 import { resolveConfig } from './config';
 import { BUILTIN_STRINGS } from './app/strings';
 import type { Chapter, Manifest } from './content/types';
@@ -117,6 +118,16 @@ describe('resolveConfig overrides', () => {
     expect(resolved.colorScheme).toBe('system');
     expect(resolved.search).toEqual({ enabled: true, minQueryLength: 3, maxResults: 5 });
     expect(resolved.routing).toBe('memory');
+  });
+
+  it('lets an explicit storageKey win over the one derived from brand', () => {
+    const resolved = resolveConfig({ ...base(), storageKey: 'acme-locale' });
+    expect(resolved.storageKey).toBe('acme-locale');
+  });
+
+  it('falls back to a default storage key for a brand that is a ReactNode', () => {
+    const resolved = resolveConfig({ ...base(), brand: createElement('span', null, 'Logo') });
+    expect(resolved.storageKey).toBe('manual-kit:locale:default');
   });
 });
 

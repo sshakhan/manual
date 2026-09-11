@@ -36,6 +36,16 @@ export interface ManualConfig<
   colorScheme?: 'light' | 'dark' | 'system';
   search?: { enabled?: boolean; minQueryLength?: number; maxResults?: number };
   routing?: 'hash' | 'memory';
+  /**
+   * Distinguishes this manual's remembered locale from another manual's in the
+   * same browser. Defaults to a slug of `brand` when that is a string.
+   *
+   * Set it explicitly when `brand` is a `ReactNode` — a JSX logo cannot be
+   * slugged, so every such manual would otherwise share one key and the two
+   * would fight over the reader's language, which is the exact bug the
+   * per-manual key exists to prevent.
+   */
+  storageKey?: string;
   document?: { title?: (ctx: RouteContext<L>) => string };
   slots?: Slots<L>;
 }
@@ -55,8 +65,15 @@ export interface ResolvedConfig<L extends string, B extends AnyBlock> {
   colorScheme: 'light' | 'dark' | 'system';
   search: { enabled: boolean; minQueryLength: number; maxResults: number };
   routing: 'hash' | 'memory';
+  storageKey: string;
   documentTitle: (ctx: RouteContext<L>) => string;
   slots: Slots<L>;
+}
+
+/** `EG Delivery` → `eg-delivery`; anything that slugs to nothing → `default`. */
+function brandSlug(brandText: string): string {
+  const slug = brandText.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  return slug === '' ? 'default' : slug;
 }
 
 /**
@@ -156,6 +173,10 @@ export function resolveConfig<L extends string, B extends AnyBlock>(
       maxResults: config.search?.maxResults ?? 30,
     },
     routing: config.routing ?? 'hash',
+    // Derived here rather than in `useRoute`, so every default lives in one
+    // place. A brand that is a ReactNode, empty, or pure punctuation slugs to
+    // nothing usable — those consumers pass `storageKey` themselves.
+    storageKey: config.storageKey ?? `manual-kit:locale:${brandSlug(brandText)}`,
     // The chapter first, the product second: a reader with nine manual tabs
     // open is distinguishing between chapters, not between products.
     documentTitle:

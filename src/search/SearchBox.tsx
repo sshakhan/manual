@@ -18,7 +18,14 @@ export function SearchBox<L extends string, B extends AnyBlock>({
   const [query, setQuery] = useState('');
 
   const searchIndex = useMemo(() => createSearchIndex(config.content, config.registry), [config]);
-  const entries = useMemo(() => searchIndex.entriesFor(route.locale), [searchIndex, route.locale]);
+  // Skips building (and caching) this locale's entries entirely when search is
+  // disabled, rather than discarding the work after an early return below —
+  // an early return here would change how many hooks run and break the rules
+  // of hooks.
+  const entries = useMemo(
+    () => (config.search.enabled ? searchIndex.entriesFor(route.locale) : []),
+    [searchIndex, route.locale, config.search.enabled],
+  );
   const hits = useMemo(
     () => search(entries, query, config.search),
     [entries, query, config.search],
