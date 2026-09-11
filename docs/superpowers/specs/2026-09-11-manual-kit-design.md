@@ -107,11 +107,11 @@ export function resolveConfig<L, B>(config: ManualConfig<L, B>): ResolvedConfig<
 
 // blocks
 export function defineBlock<T extends BlockBase>(spec: BlockSpec<T>): BlockSpec<T>;
-// `never` rather than `AnyBlock`: a spec is contravariant in its block type,
-// so a heterogeneous list of specs has no common supertype that keeps
-// `component` callable.
-export function createRegistry(specs: readonly BlockSpec<never>[]): BlockRegistry;
-export const builtinBlocks: readonly BlockSpec<never>[];
+// `any` rather than `AnyBlock` or `never`: `BlockSpec<T>` is *invariant* in T
+// (covariant through `type: T['type']`, contravariant through `component`), so
+// no concrete element type accepts a list of specs for different block types.
+export function createRegistry(specs: readonly BlockSpec<any>[]): BlockRegistry;
+export const builtinBlocks: readonly BlockSpec<any>[];
 export type { BlockSpec, BlockRegistry, BlockBase, AnyBlock, AnchorResolver };
 
 // content

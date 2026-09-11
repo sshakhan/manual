@@ -405,7 +405,7 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
   - `type JsonSchema = Record<string, unknown>`
   - `function defineBlock<T extends AnyBlock>(spec: BlockSpec<T>): BlockSpec<T>`
   - `interface BlockRegistry<B extends AnyBlock>` with `get(type: string): BlockSpec<B> | undefined`, `has(type: string): boolean`, `types(): string[]`, `specs(): readonly BlockSpec<B>[]`
-  - `function createRegistry<B extends AnyBlock>(specs: readonly BlockSpec<never>[]): BlockRegistry<B>`
+  - `function createRegistry<B extends AnyBlock>(specs: readonly BlockSpec<any>[]): BlockRegistry<B>`
 
 `searchText` returns `string | null` — `null` means "nothing worth indexing", which is what the reference `blockText` returns for an image with no caption. Keeping the `null` makes the search index's filter explicit rather than dropping empty strings by accident.
 
@@ -539,14 +539,24 @@ export interface BlockRegistry<B extends AnyBlock = AnyBlock> {
 }
 
 /**
- * `BlockSpec<never>` in the parameter is the one place variance has to be
- * bent: a spec is contravariant in its block type, so an array of specs for
- * *different* block types has no common supertype that keeps `component`
- * callable. `never` is what lets a heterogeneous list through. The cast on the
- * way out is sound because `get` is keyed by the same `type` the spec declares.
+ * `BlockSpec<any>` in the parameter is the one place type safety has to be
+ * given up, and `any` is the only thing that works.
+ *
+ * `BlockSpec<T>` is **invariant** in `T`: it uses `T` covariantly through
+ * `type: T['type']` and contravariantly through `component` and `searchText`.
+ * So there is no concrete element type that accepts a list of specs for
+ * *different* block types — not `AnyBlock` (fails on `component`, whose props
+ * would have to accept any block), and not `never` either (fails on `type`,
+ * since `'heading'` is not assignable to `never`).
+ *
+ * The erasure costs nothing where it matters: `defineBlock<T>` type-checks each
+ * spec fully at its definition site, which is the only place a spec is written.
+ * The registry beyond this point only reads `.type` and hands the spec back,
+ * and the cast on the way out is sound because `get` is keyed by the same
+ * `type` the spec declares.
  */
 export function createRegistry<B extends AnyBlock = AnyBlock>(
-  specs: readonly BlockSpec<never>[],
+  specs: readonly BlockSpec<any>[],
 ): BlockRegistry<B> {
   if (specs.length === 0) {
     throw new Error(
@@ -558,7 +568,7 @@ export function createRegistry<B extends AnyBlock = AnyBlock>(
   const byType = new Map<string, BlockSpec<B>>();
 
   for (const spec of specs) {
-    const typed = spec as unknown as BlockSpec<B>;
+    const typed = spec as BlockSpec<B>;
     if (byType.has(typed.type)) {
       throw new Error(
         `createRegistry: two specs both claim the block type "${typed.type}". ` +
@@ -1520,7 +1530,7 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 **Interfaces:**
 - Consumes: all nine specs (Tasks 7–9); `BlockRegistry`, `AnchorResolver` (Task 3).
 - Produces:
-  - `const builtinBlocks: readonly BlockSpec<never>[]` — the nine, in render-vocabulary order
+  - `const builtinBlocks: readonly BlockSpec<any>[]` — the nine, in render-vocabulary order
   - `const defaultRegistry: BlockRegistry<BuiltinBlock>`
   - `function BlockList<B extends AnyBlock>(props: { blocks: B[]; registry: BlockRegistry<B>; resolveAnchor: AnchorResolver }): JSX.Element`
 
@@ -1597,7 +1607,7 @@ describe('BlockList', () => {
       schema: { required: ['type', 'text'], properties: { type: { const: 'note' } } },
     });
     const registry = createRegistry<BuiltinBlock | NoteBlock>([
-      ...builtinBlocks, noteBlock as never,
+      ...builtinBlocks, noteBlock,
     ]);
     const { container } = withShell(
       <BlockList
@@ -1662,10 +1672,10 @@ import { keysBlock } from './keys';
  * To replace one, filter it out and add your own; `createRegistry` rejects two
  * specs claiming the same type on purpose.
  */
-export const builtinBlocks = [
+export const builtinBlocks: readonly BlockSpec<any>[] = [
   headingBlock, paragraphBlock, listBlock, stepsBlock,
   imageBlock, videoBlock, calloutBlock, tableBlock, keysBlock,
-] as unknown as readonly BlockSpec<never>[];
+];
 
 export const defaultRegistry = createRegistry<BuiltinBlock>(builtinBlocks);
 
@@ -2713,7 +2723,7 @@ describe('buildEntries', () => {
       searchText: (block) => `заметка ${block.text}`,
       schema: {},
     });
-    const registry = createRegistry<BuiltinBlock | NoteBlock>([...builtinBlocks, noteBlock as never]);
+    const registry = createRegistry<BuiltinBlock | NoteBlock>([...builtinBlocks, noteBlock]);
     const entries = buildEntries(
       [{ id: 'c', title: 'C', blocks: [{ type: 'note', text: 'своё' }] }],
       registry,
@@ -4240,7 +4250,7 @@ describe('buildSchema', () => {
         properties: { type: { const: 'note' }, text: { $ref: '#/definitions/nonEmptyText' } },
       },
     });
-    const custom = compile(buildSchema(createRegistry([...builtinBlocks, noteBlock as never])));
+    const custom = compile(buildSchema(createRegistry([...builtinBlocks, noteBlock])));
     expect(custom({ id: 'a', title: 'A', blocks: [{ type: 'note', text: 'своё' }] })).toBe(true);
     expect(custom({ id: 'a', title: 'A', blocks: [{ type: 'note' }] })).toBe(false);
   });
@@ -4382,7 +4392,7 @@ describe('validateContent with a custom registry', () => {
   it('accepts content using a registered custom block', () => {
     expect(validateContent({
       contentDir: fixture('custom'),
-      registry: createRegistry([...builtinBlocks, noteBlock as never]),
+      registry: createRegistry([...builtinBlocks, noteBlock]),
     })).toEqual([]);
   });
 
