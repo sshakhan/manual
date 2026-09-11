@@ -43,6 +43,10 @@ When both have a file, port from the **cashier** copy: it is the superset.
   the empty string, so a truthiness check is exactly equivalent to an existence check and costs
   nothing. Known sites: `blocks/inline.tsx` (both capture groups), `search/index.ts` `score()`
   (`haystack[at - 1]` feeding `RegExp.test`).
+  Like the Cyrillic rule, this binds **non-test** files: a test asserting on `JsonSchema`
+  (deliberately `Record<string, unknown>`, because the library does not model JSON Schema) has
+  nothing to narrow, and a chain of `typeof` guards there would bury the assertion it exists to
+  make. Even so, prefer `toMatchObject` to a cast wherever it reads as well or better.
 - Code comments explain *why*, in English, matching the density of the reference implementation — which is heavily commented at decision points and silent elsewhere. Do not comment what the code already says.
 
 ---
@@ -1146,10 +1150,15 @@ describe('steps', () => {
 describe('schemas', () => {
   it('each names its own type and nothing else', () => {
     for (const spec of [headingBlock, paragraphBlock, listBlock, stepsBlock]) {
-      const properties = spec.schema.properties as Record<string, { const?: string }>;
-      expect(properties.type?.const, spec.type).toBe(spec.type);
-      expect(spec.schema.additionalProperties).toBe(false);
-      expect(spec.schema.required).toContain('type');
+      // One matcher rather than three reads plus a cast: `schema` is
+      // `Record<string, unknown>` by design, since the library does not model
+      // JSON Schema, and `toMatchObject` asserts into it without pretending to
+      // know its shape.
+      expect(spec.schema, spec.type).toMatchObject({
+        additionalProperties: false,
+        required: expect.arrayContaining(['type']),
+        properties: { type: { const: spec.type } },
+      });
     }
   });
 });
