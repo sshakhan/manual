@@ -2003,6 +2003,12 @@ export function createContentSource<L extends string, B extends AnyBlock>(
 ): ContentSource<L, B> {
   // Keyed by `<locale>/<file>`, because the consumer's glob prefix depends on
   // where their entry file sits and the library cannot know it.
+  //
+  // This assumes a manifest `file` is a bare filename. A `file` naming a
+  // subdirectory would key as `<subdir>/<file>` and lose its locale, so every
+  // locale would miss it and the chapter would look untranslated rather than
+  // misconfigured. `manual-kit validate` rejects that, which is the right place
+  // for it — the failure is in the content, not here.
   const byPath = new Map<string, Chapter<B>>();
   for (const [key, module] of Object.entries(modules)) {
     const segments = key.split('/');
@@ -2368,7 +2374,11 @@ export function resolveConfig<L extends string, B extends AnyBlock>(
 ): ResolvedConfig<L, B> {
   const list = config.locales?.list ?? config.manifest.locales;
 
-  if (list.length === 0) {
+  // Destructured rather than length-checked: this is the same guard, but it
+  // narrows `firstLocale` to a string, so the fallback default below needs no
+  // assertion.
+  const [firstLocale] = list;
+  if (!firstLocale) {
     throw new Error(
       'manual-kit: the manual declares at least one locale nowhere — set ' +
         'locales.list, or list them in manifest.json.',
@@ -2381,7 +2391,7 @@ export function resolveConfig<L extends string, B extends AnyBlock>(
     );
   }
 
-  const fallback = config.locales?.fallback ?? list[0]!;
+  const fallback = config.locales?.fallback ?? firstLocale;
   if (!list.includes(fallback)) {
     throw new Error(
       `manual-kit: the fallback locale "${fallback}" is not in the locale ` +
@@ -4494,6 +4504,12 @@ Port the reference validator's logic wholesale — it is thorough and its commen
 1. It is a function taking `{ contentDir, registry }` and **returning** the error list, rather than a script that reads `import.meta.url` and calls `process.exit`. The exit code moves to `index.ts`. That is what makes it testable.
 2. The schema comes from `buildSchema(registry ?? defaultRegistry)`, not from `content/schema.json` on disk.
 3. A new check, before the schema check so its message is the clearer one: for every block, `registry.has(block.type)` or fail with `неизвестный тип блока «{type}» — его не рисует ни один spec`.
+3a. A second new check: every manifest `file` must be a bare filename, failing with
+   `{file}: имя файла главы не должно содержать «/» — путь ломает сопоставление локалей`.
+   `createContentSource` keys modules by their trailing `<locale>/<file>`, so a `file` naming a
+   subdirectory loses its locale segment and the chapter reads as untranslated in every locale —
+   a deceptive failure that belongs here, where the message can name the cause.
+   Add a fixture case for it in `broken/` and a row to the `it.each` table in `validate.test.ts`.
 4. Messages move to `messages.ts` as functions (`missingFile(locale, file)`, `unknownBlockType(locale, chapterId, type)`, …). Keep the exact Russian wording of the reference's existing messages — people know these strings.
 5. `readdirSync(mediaDir)` must tolerate an absent `media/` directory: a manual with no media is valid. Guard with `existsSync`.
 
