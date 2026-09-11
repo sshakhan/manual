@@ -94,13 +94,20 @@ describe('ChapterView', () => {
     expect(next?.textContent).toContain('История');
   });
 
-  it('omits the previous link on the first chapter and the next on the last', () => {
+  // Two tests, not one: a single test calling `setup` twice leaves both trees
+  // mounted, and the last-chapter assertion then passes on the sum across them
+  // rather than on the last chapter alone. Testing Library cleans up between
+  // tests, so splitting is the honest fix.
+  it('omits the previous link on the first chapter', () => {
     setup({ locale: 'ru', chapterId: 'start' });
     expect(document.querySelector('.chapter-nav-previous')).toBeNull();
     expect(document.querySelector('.chapter-nav-next')).not.toBeNull();
+  });
 
+  it('omits the next link on the last chapter', () => {
     setup({ locale: 'ru', chapterId: 'history' });
-    expect(document.querySelectorAll('.chapter-nav-next')).toHaveLength(1);
+    expect(document.querySelector('.chapter-nav-next')).toBeNull();
+    expect(document.querySelector('.chapter-nav-previous')).not.toBeNull();
   });
 
   it('renders the renderChapterFooter slot', () => {
