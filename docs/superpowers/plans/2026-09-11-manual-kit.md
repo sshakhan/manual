@@ -57,7 +57,11 @@ When both have a file, port from the **cashier** copy: it is the superset.
 ### Task 1: Repo scaffold and toolchain
 
 **Files:**
-- Create: `package.json`, `tsconfig.json`, `vite.config.ts`, `.gitignore` (exists — verify), `src/index.ts`
+- Create: `package.json`, `tsconfig.json`, `vite.config.ts`, `.gitignore` (exists — verify), `src/index.ts`, `vitest.setup.ts`
+  (`vitest.setup.ts` and its `setupFiles` entry were added during Task 13, once a test first
+  touched `localStorage`. Node 22+ defines its own inert `localStorage` global, and Vitest's jsdom
+  environment then declines to copy jsdom's working one over it, so `window.localStorage` resolves
+  to Node's stub. The setup file points the global at jsdom's real `Storage`.)
 - Test: `src/scaffold.test.ts`
 
 **Interfaces:**
@@ -2338,6 +2342,16 @@ export interface ManualConfig<
   colorScheme?: 'light' | 'dark' | 'system';
   search?: { enabled?: boolean; minQueryLength?: number; maxResults?: number };
   routing?: 'hash' | 'memory';
+  /**
+   * Distinguishes this manual's remembered locale from another manual's in the
+   * same browser. Defaults to a slug of `brand` when that is a string.
+   *
+   * Set it explicitly when `brand` is a `ReactNode` — a JSX logo cannot be
+   * slugged, so every such manual would otherwise share one key and the two
+   * would fight over the reader's language, which is the exact bug the
+   * per-manual key exists to prevent.
+   */
+  storageKey?: string;
   document?: { title?: (ctx: RouteContext<L>) => string };
   slots?: Slots<L>;
 }
@@ -2357,8 +2371,15 @@ export interface ResolvedConfig<L extends string, B extends AnyBlock> {
   colorScheme: 'light' | 'dark' | 'system';
   search: { enabled: boolean; minQueryLength: number; maxResults: number };
   routing: 'hash' | 'memory';
+  storageKey: string;
   documentTitle: (ctx: RouteContext<L>) => string;
   slots: Slots<L>;
+}
+
+/** `EG Delivery` → `eg-delivery`; anything that slugs to nothing → `default`. */
+function brandSlug(brandText: string): string {
+  const slug = brandText.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  return slug === '' ? 'default' : slug;
 }
 
 /**
@@ -2458,6 +2479,10 @@ export function resolveConfig<L extends string, B extends AnyBlock>(
       maxResults: config.search?.maxResults ?? 30,
     },
     routing: config.routing ?? 'hash',
+    // Derived here rather than in `useRoute`, so every default lives in one
+    // place. A brand that is a ReactNode, empty, or pure punctuation slugs to
+    // nothing usable — those consumers pass `storageKey` themselves.
+    storageKey: config.storageKey ?? `manual-kit:locale:${brandSlug(brandText)}`,
     // The chapter first, the product second: a reader with nine manual tabs
     // open is distinguishing between chapters, not between products.
     documentTitle:
@@ -2699,7 +2724,11 @@ Expected: FAIL — `Failed to resolve import './useRoute'`.
 Port the reference, keeping its comment about normalising an empty hash so the address bar always holds a copyable link. Changes:
 
 1. Take `config: ResolvedConfig<L, B>` instead of importing `chapterList()`; read `config.content.chapterList()[0]?.id ?? ''`, `config.locales.list`, `config.locales.fallback`.
-2. Derive the storage key from the brand: `` const key = `manual-kit:locale:${slug}` `` where `slug` is the brand text lowercased with non-alphanumerics collapsed to `-`, or `'default'` when the brand is a `ReactNode`. Two manuals in one browser must not share a remembered locale.
+2. Read the storage key from `config.storageKey`, which `resolveConfig` derives (Task 12). Do
+   not re-derive it here: two manuals in one browser must not share a remembered locale, and a
+   brand that is a `ReactNode`, empty, or pure punctuation cannot be slugged into a distinct key —
+   so the consumer sets `storageKey` for those, and the default belongs beside every other
+   default rather than in this hook.
 3. Branch on `config.routing`. In `'memory'` mode, hold the route in `useState`, and make `navigate` a `setState` — no `window.location`, no `hashchange` listener, no normalising effect. Keep both paths in one hook rather than two: the caller should not care, and a second hook is a second place for the locale-memory logic to drift.
 4. Keep the `try/catch` around both `localStorage` calls with the reference's comment — a till with storage disabled still gets a working manual, just no memory.
 
