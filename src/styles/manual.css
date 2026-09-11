@@ -1,0 +1,999 @@
+/* Layer order first: unlayered CSS beats every layer, so a consumer's
+   theme.css wins with no !important and no knowledge of this line. */
+@layer tokens, base, layout, blocks, utilities, overrides;
+
+@import './tokens.css';
+
+@layer base {
+  /*
+   * Scoped to `.manual`, not the bare universal selector or `body`: the shell
+   * is a component a consumer can mount inside a larger page, and a global
+   * `* { box-sizing }` or `body { font-family }` here would restyle their
+   * whole page rather than just the manual. Type and colour that used to live
+   * on `<body>` live on `.manual` for the same reason.
+   */
+  .manual,
+  .manual *,
+  .manual *::before,
+  .manual *::after {
+    box-sizing: border-box;
+  }
+
+  .manual {
+    color: var(--manual-text);
+    background: var(--manual-surface-alt);
+    font-family: var(--manual-font);
+    font-size: var(--manual-step-0);
+    line-height: 1.6;
+  }
+
+  /* A heading is read before it is looked at; let the wrapped lines be even. */
+  .manual h1,
+  .heading {
+    text-wrap: balance;
+  }
+
+  /*
+   * `prefers-contrast` is the one preference query beyond motion and print:
+   * a reader who has asked their OS for more contrast gets a stronger line
+   * colour throughout, since every border and rule in the manual is drawn
+   * from this one token.
+   */
+  @media (prefers-contrast: more) {
+    .manual {
+      --manual-line: light-dark(oklch(55% 0.02 245), oklch(75% 0.02 245));
+    }
+  }
+}
+
+@layer layout {
+  /*
+   * Three columns: chapters, the chapter, its sections. The rail is a
+   * sibling of the content rather than a child, so it can stick to the
+   * viewport while the text scrolls past it — nested inside `.content` it
+   * would scroll with the article and stop being navigation.
+   *
+   * The row stays left-aligned rather than centred: the sidebar is the
+   * manual's anchor, and a reader looks for it at the edge of the window,
+   * not floating somewhere inside it on a wide monitor.
+   *
+   * `.manual` is also the container-query root: the shell reflows by its own
+   * inline size rather than the viewport's, so it keeps working embedded in
+   * a panel and not only full-page — a media query cannot express that.
+   */
+  .manual {
+    container: manual / inline-size;
+    display: flex;
+    align-items: flex-start;
+    min-block-size: 100vh;
+
+    /*
+     * Below three columns' worth of room the rail moves above the chapter,
+     * still a list but no longer sticky: there is no space beside the text
+     * for it, and a sticky strip across the top would eat the reading area
+     * it is meant to serve.
+     *
+     * The row becomes a grid for this: the rail has to sit **above the
+     * content and beside the sidebar**, which no amount of `order` can
+     * express in a single flex row — reordering would lift it above the
+     * sidebar too. Named areas say it directly, and the DOM order is left
+     * alone, so the reading order for a screen reader stays
+     * content-then-sections at every width.
+     */
+    @container manual (inline-size < 1200px) {
+      display: grid;
+      grid-template-columns: var(--manual-sidebar-width) minmax(0, 1fr);
+      grid-template-areas: 'sidebar rail' 'sidebar content';
+      align-content: start;
+    }
+
+    /*
+     * Below this width the sidebar stops being a column and becomes the page
+     * header: one sticky row, with search and the chapter list collapsed
+     * behind the toggle. Sticky rather than static, because the reader is
+     * deep inside a long chapter when they need another one — a header they
+     * must scroll back up to find is a header they scroll past instead.
+     */
+    @container manual (inline-size < 900px) {
+      display: flex;
+      flex-direction: column;
+    }
+  }
+
+  /* ---------- sidebar ---------- */
+
+  .sidebar {
+    position: sticky;
+    inset-block-start: 0;
+    flex: 0 0 var(--manual-sidebar-width);
+    inline-size: var(--manual-sidebar-width);
+    block-size: 100vh;
+    overflow-y: auto;
+    padding-block: var(--manual-space-4) var(--manual-space-6);
+    padding-inline: var(--manual-space-4);
+    background: var(--manual-surface);
+    border-inline-end: 1px solid var(--manual-line);
+
+    @container manual (inline-size < 1200px) {
+      grid-area: sidebar;
+    }
+
+    @container manual (inline-size < 900px) {
+      position: sticky;
+      z-index: 30;
+      order: -2;
+      flex: 0 0 auto;
+      inline-size: 100%;
+      block-size: auto;
+      max-block-size: 100vh;
+      overflow: visible;
+      padding-block: var(--manual-space-3);
+      padding-inline: var(--manual-space-4);
+      border-inline-end: 0;
+      border-block-end: 1px solid var(--manual-line);
+      box-shadow: 0 2px 10px color-mix(in srgb, black 6%, transparent);
+    }
+  }
+
+  /*
+   * One row: brand, language switch, and (on narrow windows) the collapse
+   * toggle. `nowrap` plus the sizes below are what make «Evrika Cashier» and
+   * both language names fit a 320px column without wrapping mid-word —
+   * shrink the sidebar and they wrap again.
+   */
+  .sidebar-head {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--manual-space-2);
+    margin-block-end: var(--manual-space-4);
+
+    @container manual (inline-size < 900px) {
+      margin-block-end: 0;
+    }
+  }
+
+  .sidebar-brand {
+    flex: 0 1 auto;
+    min-inline-size: 0;
+    font-size: var(--manual-step-small);
+    font-weight: 800;
+    line-height: 1.2;
+    white-space: nowrap;
+    color: var(--manual-brand);
+    letter-spacing: 0.01em;
+  }
+
+  /* Hidden on desktop; the narrow container query below reveals it. */
+  .sidebar-toggle {
+    display: none;
+    flex: 0 0 auto;
+    inline-size: 38px;
+    block-size: 34px;
+    padding: 0;
+    border: 1px solid var(--manual-line);
+    border-radius: var(--manual-radius);
+    background: var(--manual-surface);
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--manual-brand);
+      outline-offset: 2px;
+    }
+
+    @container manual (inline-size < 900px) {
+      display: block;
+    }
+  }
+
+  .sidebar-toggle-bars,
+  .sidebar-toggle-bars::before,
+  .sidebar-toggle-bars::after {
+    display: block;
+    inline-size: 16px;
+    block-size: 2px;
+    margin-inline: auto;
+    border-radius: 2px;
+    background: var(--manual-brand);
+    content: '';
+  }
+
+  .sidebar-toggle-bars::before {
+    transform: translateY(-5px);
+  }
+
+  .sidebar-toggle-bars::after {
+    transform: translateY(3px);
+  }
+
+  /* Collapsed by default below the narrow breakpoint; `data-open` reveals it. */
+  .sidebar-body {
+    @container manual (inline-size < 900px) {
+      display: none;
+
+      &[data-open='true'] {
+        display: block;
+        max-block-size: calc(100vh - 70px);
+        margin-block-start: var(--manual-space-3);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+      }
+    }
+  }
+
+  .locale-switch {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 2px;
+    padding: 2px;
+    background: var(--manual-surface-alt);
+    border-radius: 999px;
+  }
+
+  .locale-button {
+    padding-block: var(--manual-space-1);
+    padding-inline: var(--manual-space-2);
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--manual-text-muted);
+    font-family: inherit;
+    font-size: var(--manual-step-tiny);
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--manual-brand);
+      outline-offset: 2px;
+    }
+
+    &.locale-button-active {
+      background: var(--manual-brand);
+      color: white;
+    }
+  }
+
+  /* ---------- search ---------- */
+
+  .search {
+    position: relative;
+    margin-block-end: var(--manual-space-4);
+  }
+
+  .search-input {
+    inline-size: 100%;
+    padding-block: var(--manual-space-2);
+    padding-inline: var(--manual-space-3);
+    border: 1px solid var(--manual-line);
+    border-radius: var(--manual-radius-lg);
+    background: var(--manual-surface-alt);
+    color: var(--manual-text);
+    font-family: inherit;
+    font-size: var(--manual-step-small);
+
+    &:focus-visible {
+      outline: 2px solid var(--manual-brand);
+      outline-offset: -1px;
+      background: var(--manual-surface);
+    }
+  }
+
+  .search-results {
+    position: absolute;
+    z-index: 10;
+    inset-block-start: calc(100% + 6px);
+    inset-inline: 0;
+    max-block-size: 60vh;
+    overflow-y: auto;
+    padding: var(--manual-space-2);
+    background: var(--manual-surface);
+    border: 1px solid var(--manual-line);
+    border-radius: var(--manual-radius-lg);
+    box-shadow: 0 12px 28px color-mix(in srgb, black 12%, transparent);
+
+    @container manual (inline-size < 900px) {
+      /* Absolute inside the sticky header: the dropdown must not push the page. */
+      max-block-size: 50vh;
+    }
+  }
+
+  .search-note {
+    margin-block: var(--manual-space-1);
+    margin-inline: var(--manual-space-2);
+    color: var(--manual-text-muted);
+    font-size: var(--manual-step-tiny);
+  }
+
+  .search-hit {
+    display: block;
+    inline-size: 100%;
+    padding-block: var(--manual-space-2);
+    padding-inline: var(--manual-space-3);
+    border: 0;
+    border-radius: var(--manual-radius);
+    background: transparent;
+    color: inherit;
+    font-family: inherit;
+    text-align: start;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--manual-brand-tint);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--manual-brand);
+      outline-offset: -1px;
+    }
+  }
+
+  .search-hit-where {
+    display: block;
+    color: var(--manual-brand);
+    font-size: var(--manual-step-tiny);
+    font-weight: 700;
+  }
+
+  .search-hit-snippet {
+    display: block;
+    color: var(--manual-text-muted);
+    font-size: var(--manual-step-tiny);
+    line-height: 1.4;
+  }
+
+  /* ---------- table of contents ---------- */
+
+  .toc {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .toc-link {
+    display: flex;
+    gap: var(--manual-space-2);
+    align-items: baseline;
+    padding-block: var(--manual-space-2);
+    padding-inline: var(--manual-space-2);
+    border-radius: var(--manual-radius);
+    color: var(--manual-text);
+    font-size: var(--manual-step-small);
+    text-decoration: none;
+
+    &:hover {
+      background: var(--manual-surface-alt);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--manual-brand);
+      outline-offset: 2px;
+    }
+
+    &.toc-link-active {
+      background: var(--manual-brand-tint);
+      color: var(--manual-brand-strong);
+      font-weight: 700;
+
+      .toc-number {
+        color: var(--manual-brand);
+      }
+    }
+
+    @container manual (inline-size < 900px) {
+      padding-block: 11px;
+    }
+  }
+
+  .toc-number {
+    flex: 0 0 auto;
+    min-inline-size: 18px;
+    color: var(--manual-text-muted);
+    font-size: var(--manual-step-tiny);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* The other half of the flex row: lets a long chapter title wrap or
+     truncate instead of pushing the row wider than `.sidebar`. */
+  .toc-title {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+  }
+
+  /* ---------- content shell ---------- */
+
+  /*
+   * `min-width: 0` is load-bearing, not tidying. A flex item defaults to
+   * `min-width: auto`, so it refuses to shrink below its widest child — one
+   * wide table and the column grows past the viewport, taking the page into
+   * horizontal scroll and carrying the sticky header's edge off-screen with
+   * it. With this, `.table-wrap` gets to do its own scrolling instead.
+   */
+  .content {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+    max-inline-size: calc(var(--manual-content-width) + 80px);
+    padding: var(--manual-space-6);
+
+    @container manual (inline-size < 1200px) {
+      grid-area: content;
+      padding-block-start: var(--manual-space-4);
+    }
+
+    @container manual (inline-size < 900px) {
+      order: 0;
+      max-inline-size: 100%;
+      padding: var(--manual-space-4);
+    }
+  }
+
+  /* ---------- section rail ---------- */
+
+  /*
+   * «On this page» — the chapter's own headings, beside the text. A chapter
+   * is a flat list of blocks, so this is the only place its shape is visible
+   * at all: without it the way to find a section is to scroll for it.
+   * Sticky, with its own scrollbar, because a long chapter's list can outgrow
+   * the viewport on a laptop.
+   */
+  .rail {
+    position: sticky;
+    inset-block-start: 0;
+    flex: 0 0 var(--manual-rail-width);
+    inline-size: var(--manual-rail-width);
+    max-block-size: 100vh;
+    overflow-y: auto;
+    padding-block: var(--manual-space-6);
+    padding-inline-end: var(--manual-space-4);
+
+    @container manual (inline-size < 1200px) {
+      grid-area: rail;
+      position: static;
+      inline-size: auto;
+      max-block-size: none;
+      padding-block-end: 0;
+      padding-inline: var(--manual-space-6);
+    }
+
+    @container manual (inline-size < 900px) {
+      order: -1;
+      padding-block: var(--manual-space-4) 0;
+      padding-inline: var(--manual-space-4);
+    }
+  }
+
+  .rail-inner {
+    border-inline-start: 1px solid var(--manual-line);
+    padding-inline-start: var(--manual-space-4);
+
+    /* The rail marks its own active section by brightening the spine it hangs off. */
+    .rail:has(.rail-link-active) & {
+      border-inline-start-color: var(--manual-brand);
+    }
+
+    @container manual (inline-size < 1200px) {
+      max-inline-size: calc(var(--manual-content-width) + 80px);
+      padding-block: var(--manual-space-3);
+      padding-inline: var(--manual-space-4);
+      border-inline-start: 0;
+      border: 1px solid var(--manual-line);
+      border-radius: var(--manual-radius-lg);
+      background: var(--manual-surface);
+
+      .rail:has(.rail-link-active) & {
+        border-color: var(--manual-brand);
+      }
+    }
+  }
+
+  .rail-title {
+    margin: 0 0 var(--manual-space-2);
+    color: var(--manual-text-muted);
+    font-size: var(--manual-step-tiny);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .rail-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    @container manual (inline-size < 1200px) {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--manual-space-1) var(--manual-space-4);
+    }
+  }
+
+  .rail-link {
+    display: block;
+    padding-block: var(--manual-space-1);
+    /*
+     * The negative margin pulls the link onto `.rail-inner`'s border, so the
+     * active marker replaces that line segment rather than sitting beside it.
+     */
+    margin-inline-start: -19px;
+    padding-inline-start: 17px;
+    border-inline-start: 2px solid transparent;
+    color: var(--manual-text-muted);
+    font-size: var(--manual-step-small);
+    line-height: 1.45;
+    text-decoration: none;
+
+    &:hover {
+      color: var(--manual-text);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--manual-brand);
+      outline-offset: 2px;
+    }
+
+    /* The rail's own indent for a level-3 heading. */
+    &[data-level='3'] {
+      padding-inline-start: 29px;
+      font-size: var(--manual-step-tiny);
+    }
+
+    &.rail-link-active {
+      border-inline-start-color: var(--manual-brand);
+      color: var(--manual-brand-strong);
+      font-weight: 700;
+    }
+
+    @container manual (inline-size < 1200px) {
+      margin-inline-start: 0;
+      padding-inline-start: 0;
+      border-inline-start: 0;
+
+      &.rail-link-active {
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+    }
+  }
+}
+
+@layer blocks {
+  /* ---------- chapter ---------- */
+
+  .chapter {
+    min-inline-size: 0;
+    padding-block: 32px;
+    padding-inline: 36px;
+    background: var(--manual-surface);
+    border: 1px solid var(--manual-line);
+    border-radius: var(--manual-radius-lg);
+
+    /* Nothing should push the first line of a chapter away from its title. */
+    > .heading:first-of-type {
+      margin-block-start: var(--manual-space-4);
+    }
+
+    @container manual (inline-size < 900px) {
+      padding: var(--manual-space-4);
+    }
+  }
+
+  .chapter-title {
+    margin: 0 0 var(--manual-space-4);
+    padding-block-end: var(--manual-space-3);
+    border-block-end: 1px solid var(--manual-line);
+    /*
+     * `--manual-step-3`'s own clamp() already floors at 1.5rem (24px), which
+     * is exactly the reference's narrow-window override — the token does the
+     * narrowing on its own, cqi-driven by `.manual`'s container, so no
+     * separate container query is needed here.
+     */
+    font-size: var(--manual-step-3);
+    font-weight: 800;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+
+  /* ---------- headings ---------- */
+
+  /*
+   * A heading belongs to what follows it, so the space above is larger than
+   * the space below — the one rule that makes a long chapter read as
+   * sections rather than an even stream of text.
+   */
+  .heading {
+    margin-block: var(--manual-space-5) var(--manual-space-2);
+    /* So a routed anchor lands below the sticky header, not under it. */
+    scroll-margin-block-start: var(--manual-space-5);
+
+    @container manual (inline-size < 900px) {
+      scroll-margin-block-start: 76px;
+    }
+  }
+
+  .heading-2 {
+    font-size: var(--manual-step-2);
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .heading-3 {
+    font-size: var(--manual-step-1);
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  .heading-anchor {
+    color: inherit;
+    text-decoration: none;
+
+    &:hover {
+      color: var(--manual-brand);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--manual-brand);
+      outline-offset: 2px;
+    }
+  }
+
+  /* ---------- prose ---------- */
+
+  .paragraph,
+  .list-item,
+  .steps-text,
+  .callout,
+  .notice {
+    /* A long word — a URL, an act number — must wrap rather than widen the column. */
+    overflow-wrap: anywhere;
+  }
+
+  .paragraph {
+    margin: 0 0 var(--manual-space-3);
+    /*
+     * A comfortable measure. The column is capped in pixels for the layout,
+     * but the line length that matters is measured in characters — at 780px
+     * and 16px Cyrillic this keeps a line near 70 characters instead of 90.
+     */
+    max-inline-size: 72ch;
+    text-wrap: pretty;
+  }
+
+  .inline-link {
+    color: var(--manual-brand-strong);
+    text-underline-offset: 2px;
+  }
+
+  .list {
+    margin: 0 0 var(--manual-space-3);
+    padding-inline-start: 22px;
+    max-inline-size: 72ch;
+  }
+
+  /* Explicit rather than left to the `<ul>`/`<ol>` default: a host page's own
+     reset stylesheet may already have zeroed `list-style` on every list. */
+  .list-bulleted {
+    list-style-type: disc;
+  }
+
+  .list-ordered {
+    list-style-type: decimal;
+  }
+
+  .list-item {
+    margin-block-end: var(--manual-space-1);
+    text-wrap: pretty;
+  }
+
+  /*
+   * `steps` is not `list` with `ordered: true`: a numbered list is prose, a
+   * step list is an instruction a reader follows in order, styled as
+   * numbered cards. Keeping them apart lets the styling diverge without
+   * rewriting content.
+   */
+  .steps {
+    margin: 0 0 var(--manual-space-4);
+    padding: 0;
+    list-style: none;
+  }
+
+  .steps-item {
+    display: flex;
+    gap: var(--manual-space-3);
+    align-items: flex-start;
+    padding-block: var(--manual-space-2);
+    padding-inline: var(--manual-space-3);
+    margin-block-end: var(--manual-space-2);
+    background: var(--manual-surface-alt);
+    border: 1px solid var(--manual-line);
+    border-radius: var(--manual-radius);
+  }
+
+  .steps-number {
+    flex: 0 0 24px;
+    block-size: 24px;
+    border-radius: 50%;
+    background: var(--manual-brand);
+    color: white;
+    font-size: var(--manual-step-tiny);
+    font-weight: 700;
+    line-height: 24px;
+    text-align: center;
+  }
+
+  .steps-text {
+    flex: 1 1 auto;
+    text-wrap: pretty;
+  }
+
+  /* ---------- figures ---------- */
+
+  .figure {
+    margin: 0 0 var(--manual-space-4);
+
+    /* When a caption follows, the image and caption read as one card. */
+    &:has(.figure-caption) .figure-image {
+      border-end-start-radius: 0;
+      border-end-end-radius: 0;
+    }
+  }
+
+  .figure-image {
+    display: block;
+    max-inline-size: 100%;
+    border: 1px solid var(--manual-line);
+    border-radius: var(--manual-radius-lg);
+  }
+
+  .figure-caption {
+    margin-block-start: var(--manual-space-1);
+    color: var(--manual-text-muted);
+    font-size: var(--manual-step-small);
+  }
+
+  .figure-missing {
+    padding: var(--manual-space-5);
+    background: repeating-linear-gradient(
+      45deg,
+      var(--manual-surface-alt),
+      var(--manual-surface-alt) 10px,
+      var(--manual-line) 10px,
+      var(--manual-line) 20px
+    );
+    border: 1px dashed var(--manual-line);
+    border-radius: var(--manual-radius-lg);
+    text-align: center;
+  }
+
+  .figure-missing-label {
+    color: var(--manual-text-muted);
+    font-size: var(--manual-step-small);
+  }
+
+  /*
+   * `.callout` and `.notice` are two families, not one, and this base rule
+   * (and the two variants after it) is the only place they overlap.
+   * `.callout` is authored content and gets all four variants below;
+   * `.notice` is the shell's own chrome (the fallback-translation and
+   * chapter-missing messages in `ChapterView`) and stops at info/warning —
+   * a `.notice-danger` must not exist, or a callout that fell back to it by
+   * accident would silently render as if nothing were wrong.
+   */
+  .callout,
+  .notice {
+    margin: 0 0 var(--manual-space-4);
+    padding-block: var(--manual-space-3);
+    padding-inline: var(--manual-space-4);
+    border-inline-start: 4px solid var(--manual-brand);
+    border-radius: var(--manual-radius);
+    background: var(--manual-brand-tint);
+    max-inline-size: 72ch;
+  }
+
+  .callout-info,
+  .notice-info {
+    border-inline-start-color: var(--manual-brand);
+    background: var(--manual-brand-tint);
+  }
+
+  .callout-warning,
+  .notice-warning {
+    border-inline-start-color: var(--manual-warning);
+    background: var(--manual-warning-tint);
+  }
+
+  .callout-danger {
+    border-inline-start-color: var(--manual-danger);
+    background: var(--manual-danger-tint);
+  }
+
+  .callout-success {
+    border-inline-start-color: var(--manual-success);
+    background: var(--manual-success-tint);
+  }
+
+  /* ---------- tables ---------- */
+
+  .table-wrap {
+    margin: 0 0 var(--manual-space-4);
+    overflow-x: auto;
+  }
+
+  .table {
+    inline-size: 100%;
+    border-collapse: collapse;
+    font-size: var(--manual-step-small);
+  }
+
+  .table-header,
+  .table-cell {
+    padding-block: var(--manual-space-2);
+    padding-inline: var(--manual-space-3);
+    border: 1px solid var(--manual-line);
+    text-align: start;
+    vertical-align: top;
+  }
+
+  .table-header {
+    background: var(--manual-surface-alt);
+    font-weight: 700;
+  }
+
+  /* ---------- keyboard shortcuts ---------- */
+
+  .keys {
+    display: flex;
+    gap: var(--manual-space-3);
+    align-items: baseline;
+    margin: 0 0 var(--manual-space-4);
+  }
+
+  .keys-combo {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .keys-key {
+    display: inline-block;
+    padding-block: 2px;
+    padding-inline: 7px;
+    border: 1px solid var(--manual-line);
+    border-block-end-width: 2px;
+    border-radius: var(--manual-radius);
+    background: var(--manual-surface-alt);
+    font-family: var(--manual-font-mono);
+    font-size: var(--manual-step-tiny);
+  }
+
+  .keys-plus {
+    padding-inline: var(--manual-space-1);
+    color: var(--manual-text-muted);
+  }
+
+  /* No properties of its own, same as in the reference: the label after the
+     combo needs no width or wrap control beyond `.keys`'s own flex row. The
+     selector is kept, empty, so a consumer targeting it by class still finds
+     a rule rather than nothing. */
+  .keys-text {
+  }
+
+  /* ---------- chapter navigation ---------- */
+
+  /*
+   * Both links name the chapter they lead to. «Next chapter» alone tells the
+   * reader only that another one exists — the title is what lets them decide
+   * whether to follow it.
+   */
+  .chapter-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--manual-space-3);
+    margin-block-start: var(--manual-space-4);
+  }
+
+  .chapter-nav-link {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-inline-size: 48%;
+    padding-block: var(--manual-space-3);
+    padding-inline: var(--manual-space-4);
+    background: var(--manual-surface);
+    border: 1px solid var(--manual-line);
+    border-radius: var(--manual-radius-lg);
+    text-decoration: none;
+
+    &:hover {
+      border-color: var(--manual-brand);
+      background: var(--manual-brand-tint);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--manual-brand);
+      outline-offset: 2px;
+    }
+
+    /* Named for symmetry with `.chapter-nav-next`; the start alignment below
+       is already the block's default and is stated only to document that. */
+    &.chapter-nav-previous {
+      text-align: start;
+    }
+
+    /* The next link is the one a reader following the manual in order wants. */
+    &.chapter-nav-next {
+      text-align: end;
+      margin-inline-start: auto;
+    }
+  }
+
+  .chapter-nav-label {
+    color: var(--manual-text-muted);
+    font-size: var(--manual-step-tiny);
+    font-weight: 600;
+  }
+
+  .chapter-nav-title {
+    color: var(--manual-brand-strong);
+    font-size: var(--manual-step-small);
+    font-weight: 700;
+    line-height: 1.35;
+  }
+}
+
+@layer utilities {
+  /* `ChapterView` adds this for 1.6s after routing to a section. */
+  .is-targeted {
+    animation: target-flash 1.6s ease-out;
+    border-radius: var(--manual-radius);
+  }
+
+  @keyframes target-flash {
+    0%,
+    60% {
+      background: var(--manual-brand-tint);
+    }
+
+    100% {
+      background: transparent;
+    }
+  }
+
+  /* The one justified !important: a reader who asked their OS to cut motion
+     must get it regardless of what animation or transition a rule above set. */
+  @media (prefers-reduced-motion: reduce) {
+    .manual *,
+    .manual *::before,
+    .manual *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  @media print {
+    /* Navigation of any kind is noise on paper — the rail included. */
+    .sidebar,
+    .rail,
+    .chapter-nav {
+      display: none;
+    }
+
+    .manual {
+      display: block;
+    }
+
+    .content {
+      max-inline-size: 100%;
+      padding: 0;
+    }
+
+    .chapter {
+      border: 0;
+    }
+  }
+}
+
+/* Declared empty and last: a consumer who wants to override the shell rather
+   than rely on unlayered CSS winning by default can target this layer
+   explicitly, at the top of the cascade, without an !important anywhere. */
+@layer overrides {
+}

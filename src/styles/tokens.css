@@ -1,0 +1,83 @@
+@layer tokens {
+  /*
+   * One brand seed, in oklch. The reference implementation hand-picked six
+   * teal hexes and three tint pairs; derived values stay in gamut and stay in
+   * step, and retheming is one declaration rather than fourteen.
+   *
+   * Semantic colours keep their own seeds: warning, danger and success carry
+   * meaning, and must not follow a brand hue.
+   */
+  @property --manual-sidebar-width { syntax: '<length>'; inherits: true; initial-value: 320px; }
+  @property --manual-content-width { syntax: '<length>'; inherits: true; initial-value: 780px; }
+  @property --manual-rail-width    { syntax: '<length>'; inherits: true; initial-value: 240px; }
+
+  :root {
+    /* #019AAC, the desktop app's primary, as oklch. */
+    --manual-brand: oklch(60.5% 0.098 208);
+    --manual-brand-strong: color-mix(in oklab, var(--manual-brand) 82%, black);
+    --manual-brand-tint: color-mix(in oklab, var(--manual-brand) 12%, var(--manual-surface));
+
+    --manual-text: light-dark(oklch(28% 0.02 245), oklch(93% 0.01 245));
+    --manual-text-muted: light-dark(oklch(54% 0.02 245), oklch(70% 0.015 245));
+    --manual-surface: light-dark(#fff, oklch(21% 0.012 245));
+    --manual-surface-alt: light-dark(oklch(98% 0.004 210), oklch(25% 0.014 245));
+    --manual-line: light-dark(oklch(92% 0.008 210), oklch(32% 0.015 245));
+
+    --manual-warning: oklch(76% 0.145 70);
+    --manual-warning-tint: color-mix(in oklab, var(--manual-warning) 16%, var(--manual-surface));
+    --manual-danger: oklch(60% 0.19 22);
+    --manual-danger-tint: color-mix(in oklab, var(--manual-danger) 14%, var(--manual-surface));
+    --manual-success: oklch(60% 0.14 145);
+    --manual-success-tint: color-mix(in oklab, var(--manual-success) 14%, var(--manual-surface));
+
+    /*
+     * Fonts are not bundled: a manual is opened in a browser or a webview, and
+     * a font file per weight would dwarf the rest of the single-file build. The
+     * stack falls back to the system UI face, which is what a till has anyway.
+     */
+    --manual-font: 'Nunito', 'Mulish', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --manual-font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+
+    --manual-sidebar-width: 320px;
+    --manual-content-width: 780px;
+    --manual-rail-width: 240px;
+    --manual-radius: 6px;
+    --manual-radius-lg: 12px;
+
+    /*
+     * One spacing scale for the whole manual. Every block used to carry its own
+     * bottom margin — 14, 16, 18, 20, 28 — which is why a paragraph after a
+     * table sat differently from a paragraph after a list. Blocks spend these,
+     * so vertical rhythm is a property of the page rather than of whichever
+     * block happens to be above.
+     */
+    --manual-space-1: 4px;
+    --manual-space-2: 8px;
+    --manual-space-3: 12px;
+    --manual-space-4: 18px;
+    --manual-space-5: 28px;
+    --manual-space-6: 40px;
+
+    /* Type scale, ~1.25 between steps, fluid at the top end only. */
+    --manual-step-0: 1rem;
+    --manual-step-1: 1.125rem;
+    --manual-step-2: clamp(1.25rem, 1.1rem + 0.6cqi, 1.375rem);
+    --manual-step-3: clamp(1.5rem, 1.2rem + 1.4cqi, 1.875rem);
+    --manual-step-small: 0.875rem;
+    --manual-step-tiny: 0.78rem;
+
+    --manual-breakpoint-narrow: 900px;
+    --manual-breakpoint-wide: 1200px;
+
+    color-scheme: light;
+  }
+
+  /*
+   * `Manual` sets this attribute from `config.colorScheme`. An attribute rather
+   * than a `prefers-color-scheme` query, so a consumer's choice beats the
+   * reader's OS — a product manual that flips to dark unasked is a surprise,
+   * and `'system'` is how a consumer opts into the OS following.
+   */
+  :root[data-color-scheme='dark'] { color-scheme: dark; }
+  :root[data-color-scheme='system'] { color-scheme: light dark; }
+}
