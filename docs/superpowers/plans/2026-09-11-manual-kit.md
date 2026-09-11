@@ -29,7 +29,10 @@ When both have a file, port from the **cashier** copy: it is the superset.
   in the reference implementation's Russian wording because the content authors read them).
   The constraint binds **non-test** files only: tests and fixtures carry Cyrillic content on
   purpose, since the manual they render is written in it, and asserting on Latin placeholder text
-  would prove nothing about a Russian-and-Kazakh product manual.
+  would prove nothing about a Russian-and-Kazakh product manual. It also binds **string literals,
+  not comments** — `MissingMedia.tsx` legitimately quotes the «Нет файла» it replaced, because a
+  comment explaining why a string moved is worth more than a comment that dances around naming
+  it.
 - Every block type is defined in exactly one file under `src/blocks/builtin/`, exporting one `BlockSpec` with all three of `component`, `searchText`, `schema`.
 - CSS baseline: 2023-and-later Chromium, Safari, Firefox. `@layer`, native nesting, `color-mix()`, `light-dark()`, `@container`, `@property` are all used unguarded. `@supports` guards only where a miss breaks layout.
 - Cascade layer order is exactly `@layer tokens, base, layout, blocks, utilities, overrides;` and it is declared once, at the top of `src/styles/manual.css`.
@@ -4981,9 +4984,14 @@ Expected: every suite PASS; typecheck clean; build succeeds.
 
 ```bash
 cd ~/Projects/manual
-# No hardcoded user-visible Cyrillic outside the three sanctioned places.
-grep -rln '[А-Яа-яӘәҚқҢңӨөҰұҮүҺһІі]' src --include='*.ts' --include='*.tsx' \
-  | grep -v -e 'app/strings.ts' -e 'content/builtins.ts' -e 'cli/' -e '\.test\.' -e '__fixtures__'
+# No hardcoded user-visible Cyrillic outside the three sanctioned places. Comment lines are
+# stripped first: a comment quoting the string it replaced is documentation, not a hardcoded
+# string, and MissingMedia.tsx legitimately contains one.
+for f in $(grep -rl '[А-Яа-яӘәҚқҢңӨөҰұҮүҺһІі]' src --include='*.ts' --include='*.tsx' \
+  | grep -v -e 'app/strings.ts' -e 'content/builtins.ts' -e 'cli/' -e '\.test\.' -e '__fixtures__'); do
+  sed -e 's|//.*||' -e '/^\s*\*/d' -e '/^\s*\/\*/d' "$f" \
+    | grep -q '[А-Яа-яӘәҚқҢңӨөҰұҮүҺһІі]' && echo "CYRILLIC STRING LITERAL: $f"
+done
 # No locale hardcoded outside the two files allowed to know about ru/kk.
 grep -rn "'ru'\|'kk'" src --include='*.ts' --include='*.tsx' \
   | grep -v -e 'content/builtins.ts' -e 'app/strings.ts' -e '\.test\.' -e '__fixtures__'
