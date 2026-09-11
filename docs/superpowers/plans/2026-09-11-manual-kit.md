@@ -1684,12 +1684,15 @@ describe('BlockList', () => {
   });
 
   it('keys by anchor id when present and by index otherwise', () => {
+    // Annotated rather than inline: an inline array literal widens to a
+    // structural type, and `B` would then be inferred from `blocks` instead of
+    // agreeing with `defaultRegistry`.
+    const mixed: BuiltinBlock[] = [
+      { type: 'paragraph', text: 'а' },
+      { type: 'paragraph', id: 'b', text: 'б' },
+    ];
     const { container } = withShell(
-      <BlockList
-        blocks={[{ type: 'paragraph', text: 'а' }, { type: 'paragraph', id: 'b', text: 'б' }]}
-        registry={defaultRegistry}
-        resolveAnchor={resolve}
-      />,
+      <BlockList blocks={mixed} registry={defaultRegistry} resolveAnchor={resolve} />,
     );
     expect(container.querySelectorAll('.paragraph')).toHaveLength(2);
   });
