@@ -3890,9 +3890,10 @@ This is a rewrite, not a port. Work rule-by-rule through the reference so no sta
 
 - [ ] **Step 1: Write the failing test**
 
-A stylesheet is checked by eye, but the token contract is checkable and is the thing consumers depend on. Create `src/styles/tokens.test.ts`:
+A stylesheet is checked by eye, but the token contract is checkable and is the thing consumers depend on. Create `src/styles/tokens.test.ts`. It reads files off disk, so it declares the node environment — under the default jsdom environment `new URL(relative, import.meta.url)` does not resolve to a filesystem path:
 
 ```ts
+// @vitest-environment node
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
@@ -3950,8 +3951,10 @@ describe('token contract', () => {
   });
 
   it('reads the colour scheme from the attribute Manual sets', () => {
-    expect(tokens).toContain('[data-color-scheme="dark"]');
-    expect(tokens).toContain('[data-color-scheme="system"]');
+    // Quote-agnostic: CSS accepts either, and pinning one would make this a
+    // style assertion rather than a behavioural one.
+    expect(tokens).toMatch(/\[data-color-scheme=["']dark["']\]/);
+    expect(tokens).toMatch(/\[data-color-scheme=["']system["']\]/);
   });
 
   it('uses container queries rather than viewport media queries for layout', () => {
