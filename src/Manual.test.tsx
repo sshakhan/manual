@@ -100,6 +100,28 @@ describe('renderManual', () => {
     root.remove();
   });
 
+  it('puts the document back as it found it, so a host app can embed it', () => {
+    document.title = 'Host app';
+    document.documentElement.lang = 'en';
+
+    const root = document.createElement('div');
+    document.body.append(root);
+
+    let handle!: ReturnType<typeof renderManual>;
+    act(() => {
+      handle = renderManual({
+        root, brand: 'EG Delivery', manifest, chapters, routing: 'memory',
+      });
+    });
+    expect(document.title).toBe('Начало — EG Delivery');
+
+    act(() => handle.unmount());
+    expect(document.title).toBe('Host app');
+    expect(document.documentElement.lang).toBe('en');
+    expect(document.documentElement.dataset.colorScheme).toBeUndefined();
+    root.remove();
+  });
+
   it('throws the config error rather than mounting a broken shell', () => {
     expect(() =>
       renderManual({

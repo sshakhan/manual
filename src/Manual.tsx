@@ -27,6 +27,34 @@ export function Manual<L extends string, B extends AnyBlock>({
     [strings, config.resolveMedia],
   );
 
+  /*
+   * Put the document back the way it was found, on unmount.
+   *
+   * Captured once on mount rather than per navigation: a cleanup that ran on
+   * every route change would restore the *previous chapter's* title, so a host
+   * app unmounting the shell would inherit whatever chapter the reader happened
+   * to leave on. Embedding is the whole reason these effects live here rather
+   * than in `renderManual`, and a shell that permanently rewrites its host's
+   * title, language and colour scheme is not embeddable.
+   *
+   * It runs before the two setters below, so it captures the pre-mount values.
+   */
+  useEffect(() => {
+    const root = document.documentElement;
+    const before = {
+      title: document.title,
+      lang: root.lang,
+      colorScheme: root.dataset.colorScheme,
+    };
+
+    return () => {
+      document.title = before.title;
+      root.lang = before.lang;
+      if (before.colorScheme === undefined) delete root.dataset.colorScheme;
+      else root.dataset.colorScheme = before.colorScheme;
+    };
+  }, []);
+
   // `color-scheme` has to be on the root element for `light-dark()` to resolve
   // anywhere below it, and the stylesheet reads this attribute rather than a
   // media query so a consumer's choice beats the reader's OS.
@@ -37,7 +65,7 @@ export function Manual<L extends string, B extends AnyBlock>({
   useEffect(() => {
     document.title = config.documentTitle(route);
     document.documentElement.lang = route.locale;
-  }, [config, route]);
+  }, [config.documentTitle, route]);
 
   return (
     <ManualProvider value={value}>
