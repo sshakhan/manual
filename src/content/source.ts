@@ -36,6 +36,12 @@ export function createContentSource<L extends string, B extends AnyBlock>(
 ): ContentSource<L, B> {
   // Keyed by `<locale>/<file>`, because the consumer's glob prefix depends on
   // where their entry file sits and the library cannot know it.
+  //
+  // This assumes a manifest `file` is a bare filename. A `file` naming a
+  // subdirectory would key as `<subdir>/<file>` and lose its locale, so every
+  // locale would miss it and the chapter would look untranslated rather than
+  // misconfigured. `manual-kit validate` rejects that, which is the right place
+  // for it — the failure is in the content, not here.
   const byPath = new Map<string, Chapter<B>>();
   for (const [key, module] of Object.entries(modules)) {
     const segments = key.split('/');

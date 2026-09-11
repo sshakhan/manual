@@ -72,7 +72,11 @@ export function resolveConfig<L extends string, B extends AnyBlock>(
 ): ResolvedConfig<L, B> {
   const list = config.locales?.list ?? config.manifest.locales;
 
-  if (list.length === 0) {
+  // Destructured rather than length-checked: this is the same guard, but it
+  // narrows `firstLocale` to a string, so the fallback default below needs no
+  // assertion.
+  const [firstLocale] = list;
+  if (!firstLocale) {
     throw new Error(
       'manual-kit: the manual declares at least one locale nowhere — set ' +
         'locales.list, or list them in manifest.json.',
@@ -85,7 +89,7 @@ export function resolveConfig<L extends string, B extends AnyBlock>(
     );
   }
 
-  const fallback = config.locales?.fallback ?? list[0]!;
+  const fallback = config.locales?.fallback ?? firstLocale;
   if (!list.includes(fallback)) {
     throw new Error(
       `manual-kit: the fallback locale "${fallback}" is not in the locale ` +
