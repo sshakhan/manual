@@ -145,6 +145,9 @@ renderManual({
   brand: 'EG Delivery',
   manifest,
   chapters: import.meta.glob('../content/*/*.json', { eager: true }),
+  media: import.meta.glob('../content/media/*', {
+    eager: true, query: '?url', import: 'default',
+  }),
   locales: { list: ['ru', 'kk'], fallback: 'ru' },
   colorScheme: 'light',
 });
@@ -162,6 +165,7 @@ interface ManualConfig<L extends string = BuiltinLocale, B extends BlockBase = B
   brand: string | ReactNode;
   manifest: Manifest<L>;
   chapters: Record<string, { default: Chapter<B> }>;
+  media?: Record<string, string>;     // asset path → bundled URL; see below
   locales?: {
     list?: readonly L[];              // default: manifest.locales
     fallback?: L;                     // default: first of list
@@ -238,7 +242,7 @@ The fallback behaviour carries over unchanged: a chapter missing in the
 requested locale renders the fallback locale's text with a notice, because a
 translation gap is more usefully shown than hidden.
 
-**Why the consumer runs the glob.** `loader.ts` currently calls
+**Why the consumer runs the globs — both of them.** `loader.ts` currently calls
 `import.meta.glob('../../content/*/*.json', { eager: true })`. Vite resolves
 that specifier at build time relative to the file that calls it, so inside
 `node_modules/@evrika/manual-kit` it would glob the package's own directory and
@@ -248,6 +252,18 @@ also preserves the constraint the eager glob exists for: a page opened over
 `file://` cannot `fetch()` its own JSON (opaque origin in both WebView2 and
 WKWebView), so every chapter must be in the module graph for
 `vite-plugin-singlefile` to inline it.
+
+`blocks/media.tsx` runs a **second** glob of the same kind —
+`import.meta.glob('../../content/media/*', { eager: true, query: '?url' })` —
+which turns a stable content path like `media/kaspi-qr.svg` into the URL the
+bundler produced. It inverts for exactly the same reason, and becomes
+`config.media`. A consumer that ships no media omits it; every `image` and
+`video` block then renders the missing-media placeholder, which is already the
+designed behaviour for a named file that is not in the bundle.
+
+That placeholder currently hardcodes the Russian `Нет файла: {src}`
+(`blocks/media.tsx`). It becomes the `mediaMissing` UI string, so it follows
+the reader's locale like the rest of the chrome.
 
 ### Search
 
