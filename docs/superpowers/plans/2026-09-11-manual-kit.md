@@ -394,7 +394,8 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 
 **Files:**
 - Create: `src/blocks/registry.ts`
-- Test: `src/blocks/registry.test.ts`
+- Test: `src/blocks/registry.test.tsx` — `.tsx`, not `.ts`: the test defines throwaway block
+  components, so it contains JSX
 
 **Interfaces:**
 - Consumes: `AnyBlock`, `BlockBase` from `src/content/types.ts` (Task 2).
@@ -411,7 +412,7 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 
 - [ ] **Step 1: Write the failing test**
 
-Create `src/blocks/registry.test.ts`:
+Create `src/blocks/registry.test.tsx`:
 
 ```tsx
 import { describe, expect, it } from 'vitest';
@@ -484,7 +485,7 @@ Note the last registry test: overriding a built-in is **not** done by re-registe
 
 - [ ] **Step 2: Run it to make sure it fails**
 
-Run: `cd ~/Projects/manual && npx vitest run src/blocks/registry.test.ts`
+Run: `cd ~/Projects/manual && npx vitest run src/blocks/registry.test.tsx`
 Expected: FAIL — `Failed to resolve import './registry'`.
 
 - [ ] **Step 3: Write `src/blocks/registry.ts`**
@@ -593,14 +594,14 @@ export function createRegistry<B extends AnyBlock = AnyBlock>(
 
 - [ ] **Step 4: Run the tests**
 
-Run: `cd ~/Projects/manual && npx vitest run src/blocks/registry.test.ts && npm run typecheck`
+Run: `cd ~/Projects/manual && npx vitest run src/blocks/registry.test.tsx && npm run typecheck`
 Expected: PASS, 7 tests; typecheck clean.
 
 - [ ] **Step 5: Commit**
 
 ```bash
 cd ~/Projects/manual
-git add src/blocks/registry.ts src/blocks/registry.test.ts
+git add src/blocks/registry.ts src/blocks/registry.test.tsx
 git commit -m "feat: add the block registry
 
 One spec per block type carries its component, its search extractor and its
