@@ -3794,9 +3794,16 @@ export function Manual<L extends string, B extends AnyBlock>({
 
   return (
     <ManualProvider value={value}>
-      {/* `.manual` is the container query root — the shell reflows by its own
-          width, so it works embedded in a panel and not only full-page. */}
+      {/*
+        `.manual` establishes the container; `.manual-layout` is what reflows.
+        Two elements, not one, because **an element can never be the subject of
+        its own container query** — the query resolves against ancestors, so a
+        `.manual` that both declares `container: manual` and queries it for its
+        own `display` would simply never match, and the shell would stay a
+        three-column row at every width.
+      */}
       <div className="manual">
+        <div className="manual-layout">
         <Sidebar
           config={config}
           route={route}
@@ -3807,6 +3814,7 @@ export function Manual<L extends string, B extends AnyBlock>({
             wide window, and the rail moves above the text on a narrow one,
             purely in CSS. */}
         <ChapterView config={config} route={route} />
+        </div>
       </div>
     </ManualProvider>
   );
@@ -3878,7 +3886,7 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 - Reference: `~/Projects/evrika-cashier-desktop/manual/src/styles.css` (895 lines — read it in full before starting)
 
 **Interfaces:**
-- Consumes: the class names every component above renders. Grep them out rather than trusting this list: `manual`, `sidebar*`, `locale-switch`, `locale-button*`, `toc*`, `search*`, `content`, `chapter*`, `rail*`, `heading*`, `paragraph`, `list*`, `steps*`, `figure*`, `callout*`, `notice*`, `table*`, `keys*`, `inline-link`, `is-targeted`.
+- Consumes: the class names every component above renders. Grep them out rather than trusting this list: `manual`, `manual-layout`, `sidebar*`, `locale-switch`, `locale-button*`, `toc*`, `search*`, `content`, `chapter*`, `rail*`, `heading*`, `paragraph`, `list*`, `steps*`, `figure*`, `callout*`, `notice*`, `table*`, `keys*`, `inline-link`, `is-targeted`.
   **`callout` and `notice` are two families, not one.** `.callout` styles an authored callout
   block and needs all four variants (`info`, `warning`, `danger`, `success`); `.notice` styles the
   shell's own messages and needs only `info` and `warning`, which is all `ChapterView` renders.
@@ -4090,12 +4098,30 @@ Structure:
 
 Rules for the rewrite, each traceable to a decision in the spec:
 
-- `.manual { container: manual / inline-size; }` and every layout breakpoint as `@container manual (inline-size < 900px)` / `(inline-size >= 1200px)`. `@media` survives only for `prefers-reduced-motion`, `prefers-contrast` and `print`.
+- `.manual { container: manual / inline-size; }` establishes the container and carries the
+  theme (colour, font, `min-block-size`). **`.manual-layout`, its only child, carries the
+  three-column layout and every breakpoint.** They must be two elements: an element is never the
+  subject of its own container query — the query is resolved against the element's *ancestors* —
+  so putting `display: grid` under `@container manual (…)` inside `.manual`'s own rule produces
+  dead code that never matches, and the shell never reflows. Every layout breakpoint is
+  `@container manual (inline-size < 900px)` / `(inline-size < 1200px)`, applied to
+  `.manual-layout` or to descendants. `@media` survives only for `prefers-reduced-motion`,
+  `prefers-contrast` and `print`.
 - Nesting for each component: one top-level selector per block with its modifiers, states and children nested inside. `&:hover`, `&:focus-visible`, `&[data-open='true']`, `&[data-level='3']`.
 - Logical properties throughout: `padding-inline`, `margin-block-end`, `border-inline-start`, `inset-inline-start`. No `left`/`right`/`margin-top` — this is what leaves the manual RTL-ready.
 - `scroll-margin-block-start: var(--manual-space-5)` on every heading, so a routed anchor lands below the sticky header instead of under it.
 - `text-wrap: balance` on `h1`, `.heading`; `text-wrap: pretty` on `.paragraph`, `.list-item`, `.steps-text`.
+- **`clamp()` does not replace a breakpoint unless the arithmetic says so.** `--manual-step-3`'s
+  ceiling is only reached below roughly a 343px container, so the chapter title does *not* shrink
+  at the reference's 900px breakpoint on its own — it needs an explicit rule under
+  `@container manual (inline-size < 900px)`. Work the clamp before assuming it covers a
+  breakpoint; this one silently did not.
 - `:has()` where the reference needed a class from JS: e.g. `.figure:has(figcaption)`, `.rail:has(.rail-link-active)`.
+- **Any reset of a rule that was set through an attribute selector must repeat that attribute
+  selector.** `.rail-link[data-level='3']` is specificity (0,2,0) and a bare `.rail-link` reset is
+  (0,1,0), so source order does not save you — the reference lists both in its reset for exactly
+  this reason. Dropping the attribute from the reset leaves level-3 rail links indented where
+  their level-2 siblings are flush.
 - `:focus-visible` rings on every interactive element — `.toc-link`, `.locale-button`, `.search-hit`, `.rail-link`, `.chapter-nav-link`, `.heading-anchor`. Verify against the reference that none is lost.
 - `@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }` — the one justified `!important`, in `utilities`.
 - `.is-targeted` keeps its highlight (`ChapterView` adds the class for 1600ms).
@@ -4961,7 +4987,14 @@ Expected: FAIL — `Failed to resolve import './src/config'`.
 
 `config.ts` exports `exampleConfig(): Omit<ManualConfig<'ru'|'kk'|'en', ExampleBlock>, 'root'>` — both globs, the three locales with `en` labels and strings supplied in full, and `blocks: createRegistry([...builtinBlocks, shortcutBlock])`. It omits `root` so the test can supply a detached element; `main.tsx` is `renderManual({ ...exampleConfig(), root: document.getElementById('root')! })` and nothing else.
 
-`theme.css` overrides two or three tokens unlayered (a different brand hue is the clearest demonstration) with a comment noting that it needs no `@layer` and no `!important` because unlayered CSS outranks every layer.
+`theme.css` overrides two or three tokens unlayered (a different brand hue is the clearest
+demonstration) with a comment noting that it needs no `@layer` and no `!important` because
+unlayered CSS outranks every layer.
+
+It also carries `body { margin: 0; }`. The library deliberately styles only its own subtree —
+`@layer base` is scoped to `.manual` rather than `body`, so an embedded shell cannot restyle its
+host — which means a *full-page* manual would otherwise keep the user agent's default body
+margin. The page's own reset belongs to the page, so the scaffold supplies it.
 
 `example/vite.config.ts`:
 
@@ -4993,7 +5026,16 @@ In the browser, check by eye against the reference manuals: three columns on a w
 
 - [ ] **Step 7: Verify the dark palette renders**
 
-Temporarily set `colorScheme: 'dark'` in `example/src/config.ts`, reload, and check every surface, every callout variant, the table, the `keys` block and the focus rings for contrast. Revert to `'light'` afterwards. Fix any token that reads badly in `src/styles/tokens.css` — this is the only pass the dark palette gets before a consumer opts in.
+Temporarily set `colorScheme: 'dark'` in `example/src/config.ts`, reload, and check every surface,
+every callout variant, the table, the `keys` block and the focus rings for contrast.
+
+**Look hardest at the four callout tints.** They derive as `color-mix(… 12–16%, var(--manual-surface))`,
+a percentage tuned against a white surface; against a dark surface the same percentage yields far
+less separation, and all four may sit within a few points of lightness of both `--manual-surface`
+and `--manual-surface-alt` — i.e. four differently-meant callouts that all read as the same grey
+box. If they do, give the tints an explicit dark value rather than raising the shared percentage,
+which would blow out the light palette:
+`--manual-warning-tint: light-dark(color-mix(…, white), color-mix(… 30%, var(--manual-surface)));` Revert to `'light'` afterwards. Fix any token that reads badly in `src/styles/tokens.css` — this is the only pass the dark palette gets before a consumer opts in.
 
 - [ ] **Step 8: Commit**
 
