@@ -3580,8 +3580,8 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 Create `src/Manual.test.tsx`:
 
 ```tsx
-import { beforeEach, describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, render, screen } from '@testing-library/react';
 import { Manual } from './Manual';
 import { renderManual } from './renderManual';
 import { resolveConfig } from './config';
@@ -3609,6 +3609,10 @@ const config = (overrides: Record<string, unknown> = {}) =>
     root: document.createElement('div'), brand: 'EG Delivery',
     manifest, chapters, routing: 'memory', ...overrides,
   } as never);
+
+// jsdom implements no `scrollTo`, and `ChapterView` calls it on every route
+// change. The same stub is in ChapterView.test.tsx.
+vi.stubGlobal('scrollTo', () => {});
 
 beforeEach(() => {
   window.location.hash = '';
@@ -3645,7 +3649,13 @@ describe('Manual', () => {
   });
 
   it('honours a custom document title', () => {
-    render(<Manual config={config({ document: { title: ({ chapterId }) => `docs/${chapterId}` } })} />);
+    render(
+      <Manual
+        config={config({
+          document: { title: ({ chapterId }: { chapterId: string }) => `docs/${chapterId}` },
+        })}
+      />,
+    );
     expect(document.title).toBe('docs/start');
   });
 });
@@ -3655,12 +3665,19 @@ describe('renderManual', () => {
     const root = document.createElement('div');
     document.body.append(root);
 
-    const handle = renderManual({
-      root, brand: 'EG Delivery', manifest, chapters, routing: 'memory',
+    // `createRoot().render()` schedules concurrently, so the mount is not
+    // observable on the next line without flushing. `act` is the test's job:
+    // forcing a synchronous flush inside `renderManual` would make every
+    // consumer pay for this test's convenience.
+    let handle!: ReturnType<typeof renderManual>;
+    act(() => {
+      handle = renderManual({
+        root, brand: 'EG Delivery', manifest, chapters, routing: 'memory',
+      });
     });
     expect(root.textContent).toContain('Начало');
 
-    handle.unmount();
+    act(() => handle.unmount());
     expect(root.textContent).toBe('');
     root.remove();
   });
