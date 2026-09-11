@@ -1269,7 +1269,7 @@ describe('callout', () => {
           resolveAnchor={resolve}
         />,
       );
-      expect(container.querySelector(`.notice-${variant}`), variant).not.toBeNull();
+      expect(container.querySelector(`.callout-${variant}`), variant).not.toBeNull();
     }
   });
 
@@ -1345,7 +1345,14 @@ Expected: FAIL — `Failed to resolve import './callout'`.
 
 - [ ] **Step 3: Write the three specs**
 
-Port `Callout` and `Keys` from the cashier `notices.tsx` and `Table` from `table.tsx`, each into its own file with its spec appended, in the shape Task 7 established. `searchText` implementations:
+Port `Callout` and `Keys` from the cashier `notices.tsx` and `Table` from `table.tsx`, each into its own file with its spec appended, in the shape Task 7 established.
+
+`Callout` renders `` `callout callout-${block.variant}` `` — **`callout`, not `notice`**. The two
+are different things and the stylesheet treats them as such: `.callout` is authored content and
+has all four variants, while `.notice` is the shell's own message chrome and exists only as
+`.notice-info` and `.notice-warning` (the fallback and chapter-missing messages in
+`ChapterView`). Rendering a callout as `.notice-danger` or `.notice-success` would silently drop
+it to the base teal styling, because those two rules do not exist. `searchText` implementations:
 
 - callout: `(block) => block.text`
 - keys: `(block) => \`${block.combo.join(' + ')} ${block.text}\`` — matches the cashier `search.ts` exactly, so `Ctrl + P` is findable as typed
@@ -3727,7 +3734,12 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 - Reference: `~/Projects/evrika-cashier-desktop/manual/src/styles.css` (895 lines — read it in full before starting)
 
 **Interfaces:**
-- Consumes: the class names every component above renders. Grep them out rather than trusting this list: `manual`, `sidebar*`, `locale-switch`, `locale-button*`, `toc*`, `search*`, `content`, `chapter*`, `rail*`, `heading*`, `paragraph`, `list*`, `steps*`, `figure*`, `notice*`, `table*`, `keys*`, `inline-link`, `is-targeted`.
+- Consumes: the class names every component above renders. Grep them out rather than trusting this list: `manual`, `sidebar*`, `locale-switch`, `locale-button*`, `toc*`, `search*`, `content`, `chapter*`, `rail*`, `heading*`, `paragraph`, `list*`, `steps*`, `figure*`, `callout*`, `notice*`, `table*`, `keys*`, `inline-link`, `is-targeted`.
+  **`callout` and `notice` are two families, not one.** `.callout` styles an authored callout
+  block and needs all four variants (`info`, `warning`, `danger`, `success`); `.notice` styles the
+  shell's own messages and needs only `info` and `warning`, which is all `ChapterView` renders.
+  The reference shares their base rule and the two overlapping variants via a selector list —
+  keep that, and do not let the shorter family swallow the longer one.
 - Produces: `dist/styles.css`, one file, imported by consumers as `@evrika/manual-kit/styles.css`.
 
 This is a rewrite, not a port. Work rule-by-rule through the reference so no state is lost — the hover, focus, active, `data-open`, `data-level` and `is-targeted` rules are easy to drop and invisible when dropped.
@@ -3957,12 +3969,14 @@ Run:
 cd ~/Projects/manual
 # Every class the components render must be styled.
 for c in manual sidebar sidebar-head sidebar-brand sidebar-body sidebar-toggle \
+         callout callout-info callout-warning callout-danger callout-success \
+         notice notice-info notice-warning \
          locale-switch locale-button toc toc-link toc-number toc-title \
          search search-input search-results search-note search-hit \
          content chapter chapter-title chapter-nav chapter-nav-link \
          rail rail-inner rail-title rail-list rail-link \
          heading heading-anchor paragraph list list-item steps steps-number steps-text \
-         figure figure-caption figure-missing notice table table-wrap table-header \
+         figure figure-caption figure-missing table table-wrap table-header \
          table-cell keys keys-key keys-plus keys-combo keys-text inline-link is-targeted; do
   grep -q "\.$c" src/styles/manual.css || echo "UNSTYLED: .$c"
 done
