@@ -22,7 +22,11 @@ When both have a file, port from the **cashier** copy: it is the superset.
 - `react` and `react-dom` are **peer** dependencies at `>=18`, and appear in `devDependencies` too (for tests). They are never bundled — `build.rollupOptions.external` must list both plus `react/jsx-runtime`.
 - No new runtime dependencies. The package's `dependencies` stay empty; `ajv` is a `dependency` only because the CLI needs it at runtime, and the CLI is a separate entry point. Nothing in `src/` outside `src/cli/` may import it.
 - Locale types are generic: `L extends string`. No file outside `src/app/strings.ts` and `src/content/builtins.ts` may hardcode `'ru'` or `'kk'`.
-- No user-visible string is hardcoded in a component. Every one comes from `UiStrings`. Grep for Cyrillic in `src/` outside `strings.ts` must return nothing.
+- No user-visible string is hardcoded in a component. Every one comes from `UiStrings`. Grep for
+  Cyrillic in `src/` must return nothing outside three sanctioned places: `app/strings.ts` (the
+  chrome strings themselves), `content/builtins.ts` (the two language endonyms — a language's own
+  name is never translated), and `cli/` (developer-facing validator messages, deliberately kept
+  in the reference implementation's Russian wording because the content authors read them).
 - Every block type is defined in exactly one file under `src/blocks/builtin/`, exporting one `BlockSpec` with all three of `component`, `searchText`, `schema`.
 - CSS baseline: 2023-and-later Chromium, Safari, Firefox. `@layer`, native nesting, `color-mix()`, `light-dark()`, `@container`, `@property` are all used unguarded. `@supports` guards only where a miss breaks layout.
 - Cascade layer order is exactly `@layer tokens, base, layout, blocks, utilities, overrides;` and it is declared once, at the top of `src/styles/manual.css`.
@@ -4951,9 +4955,9 @@ Expected: every suite PASS; typecheck clean; build succeeds.
 
 ```bash
 cd ~/Projects/manual
-# No hardcoded user-visible Cyrillic outside the strings file and the CLI.
+# No hardcoded user-visible Cyrillic outside the three sanctioned places.
 grep -rln '[А-Яа-яӘәҚқҢңӨөҰұҮүҺһІі]' src --include='*.ts' --include='*.tsx' \
-  | grep -v -e 'app/strings.ts' -e 'cli/' -e '\.test\.' -e '__fixtures__'
+  | grep -v -e 'app/strings.ts' -e 'content/builtins.ts' -e 'cli/' -e '\.test\.' -e '__fixtures__'
 # No locale hardcoded outside the two files allowed to know about ru/kk.
 grep -rn "'ru'\|'kk'" src --include='*.ts' --include='*.tsx' \
   | grep -v -e 'content/builtins.ts' -e 'app/strings.ts' -e '\.test\.' -e '__fixtures__'
