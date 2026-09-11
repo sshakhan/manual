@@ -15,7 +15,7 @@ describe('callout', () => {
           resolveAnchor={resolve}
         />,
       );
-      expect(container.querySelector(`.notice-${variant}`), variant).not.toBeNull();
+      expect(container.querySelector(`.callout-${variant}`), variant).not.toBeNull();
     }
   });
 
