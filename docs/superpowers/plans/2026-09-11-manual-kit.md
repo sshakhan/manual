@@ -2200,7 +2200,10 @@ describe('resolveConfig overrides', () => {
       locales: { labels: { ru: 'Русский', en: 'English' }, strings: { en } },
     } as never);
     expect(resolved.locales.list).toEqual(['ru', 'en']);
-    expect(resolved.locales.strings.en.onThisPage).toBe('On this page');
+    // Optional-chained: casting the config `as never` widens `L` to `string`, so
+    // this lookup is an index access and `noUncheckedIndexedAccess` types it as
+    // possibly undefined. The assertion still fails loudly if it is.
+    expect(resolved.locales.strings.en?.onThisPage).toBe('On this page');
   });
 
   it('honours an explicit fallback, list, scheme and search settings', () => {
@@ -2391,22 +2394,33 @@ export function resolveConfig<L extends string, B extends AnyBlock>(
   const strings = {} as Record<L, UiStrings>;
 
   for (const locale of list) {
+    const bundled = (BUILTIN_STRINGS as Record<string, UiStrings | undefined>)[locale];
+    const override = config.locales?.strings?.[locale];
+    const merged = { ...bundled, ...override } as Partial<UiStrings>;
+    const missing = UI_STRING_KEYS.filter((key) => !merged[key]);
+
+    /*
+     * The strings are checked before the label so a locale with both wrong
+     * reports both in one run. A consumer adding a locale the library bundles
+     * nothing for has exactly that, and learning about the two a run at a time
+     * is two round trips for no reason.
+     */
+    const alsoMissing =
+      missing.length > 0
+        ? ` It is also missing ${missing.length} UI string(s): ${missing.join(', ')}.`
+        : '';
+
     const bundledLabel = (BUILTIN_LOCALE_LABELS as Record<string, string | undefined>)[locale];
     const label = config.locales?.labels?.[locale] ?? bundledLabel;
     if (!label) {
       throw new Error(
         `manual-kit: locale "${locale}" has no display label. Add it to ` +
           'locales.labels — a language\'s own name is the one thing the library ' +
-          'cannot guess.',
+          `cannot guess.${alsoMissing}`,
       );
     }
     labels[locale] = label;
 
-    const bundled = (BUILTIN_STRINGS as Record<string, UiStrings | undefined>)[locale];
-    const override = config.locales?.strings?.[locale];
-    const merged = { ...bundled, ...override } as Partial<UiStrings>;
-
-    const missing = UI_STRING_KEYS.filter((key) => !merged[key]);
     if (missing.length > 0) {
       throw new Error(
         `manual-kit: locale "${locale}" is missing ${missing.length} UI ` +
