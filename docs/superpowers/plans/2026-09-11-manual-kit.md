@@ -27,6 +27,9 @@ When both have a file, port from the **cashier** copy: it is the superset.
   chrome strings themselves), `content/builtins.ts` (the two language endonyms — a language's own
   name is never translated), and `cli/` (developer-facing validator messages, deliberately kept
   in the reference implementation's Russian wording because the content authors read them).
+  The constraint binds **non-test** files only: tests and fixtures carry Cyrillic content on
+  purpose, since the manual they render is written in it, and asserting on Latin placeholder text
+  would prove nothing about a Russian-and-Kazakh product manual.
 - Every block type is defined in exactly one file under `src/blocks/builtin/`, exporting one `BlockSpec` with all three of `component`, `searchText`, `schema`.
 - CSS baseline: 2023-and-later Chromium, Safari, Firefox. `@layer`, native nesting, `color-mix()`, `light-dark()`, `@container`, `@property` are all used unguarded. `@supports` guards only where a miss breaks layout.
 - Cascade layer order is exactly `@layer tokens, base, layout, blocks, utilities, overrides;` and it is declared once, at the top of `src/styles/manual.css`.
