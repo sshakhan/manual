@@ -29,6 +29,13 @@ When both have a file, port from the **cashier** copy: it is the superset.
 - Tests: Vitest, `environment: 'jsdom'`, `globals: true`, `include: ['src/**/*.test.{ts,tsx}', 'example/**/*.test.{ts,tsx}']`.
 - Commit after every task. Conventional Commit prefixes (`feat:`, `test:`, `docs:`, `chore:`, `fix:`). End every commit message with:
   `Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>`
+- `noUncheckedIndexedAccess` is on, so every index and every regex capture group reads as
+  `T | undefined`. The reference repos do not have it enabled, so **ported code will need
+  narrowing added**. Narrow it — `if (m?.[1] && m[2])`, `?? fallback`, an early return — rather
+  than reaching for `!` or a cast. Where a regex quantifier is `+`, a matched group can never be
+  the empty string, so a truthiness check is exactly equivalent to an existence check and costs
+  nothing. Known sites: `blocks/inline.tsx` (both capture groups), `search/index.ts` `score()`
+  (`haystack[at - 1]` feeding `RegExp.test`).
 - Code comments explain *why*, in English, matching the density of the reference implementation — which is heavily commented at decision points and silent elsewhere. Do not comment what the code already says.
 
 ---
@@ -685,9 +692,26 @@ Expected: FAIL — `Failed to resolve import './inline'`.
 
 Copy `~/Projects/evrika-cashier-desktop/manual/src/blocks/inline.tsx` to `src/blocks/inline.tsx`. Keep its doc comment in full — it is the normative statement of the content format, and the validator in Task 15 checks the same two forms.
 
-Two changes:
+Three changes:
 1. Delete the local `export type AnchorResolver` and import it: `import type { AnchorResolver } from './registry';`. It now belongs to the registry, since it is part of `BlockProps`.
-2. Adjust the comment's cross-reference from `src/app/route.ts` to the new path — the file is still `src/app/route.ts` (Task 8), so no change is needed. Verify rather than assume.
+2. Adjust the comment's cross-reference from `src/app/route.ts` to the new path — the file is still `src/app/route.ts` (Task 13), so no change is needed. Verify rather than assume.
+3. Narrow the capture groups, which `noUncheckedIndexedAccess` types as `string | undefined`
+   where the reference repo did not. Both guards become truthiness checks, which is sound
+   because both groups are `+`-quantified and so can never match an empty string:
+
+   ```tsx
+   const bold = /^\*\*([^*]+)\*\*$/.exec(part);
+   if (bold?.[1]) return <strong key={index}>{bold[1]}</strong>;
+
+   const link = /^\[([^\]]+)\]\(#([a-z0-9-]+(?:\/[a-z0-9-]+)?)\)$/.exec(part);
+   if (link?.[1] && link[2]) {
+     return (
+       <a key={index} className="inline-link" href={resolveAnchor(link[2])}>
+         {link[1]}
+       </a>
+     );
+   }
+   ```
 
 - [ ] **Step 4: Run the tests**
 
@@ -2838,7 +2862,17 @@ Expected: FAIL — `Failed to resolve import './index'`.
 
 - [ ] **Step 3: Write `src/search/index.ts`**
 
-Port `score`, `snippetFor`, `SNIPPET_RADIUS`, `buildEntries` and `search` from the reference verbatim — the scoring comment about «касса» versus «прокассировать» explains a real decision and stays. Changes:
+Port `score`, `snippetFor`, `SNIPPET_RADIUS`, `buildEntries` and `search` from the reference verbatim — the scoring comment about «касса» versus «прокассировать» explains a real decision and stays.
+
+One narrowing is needed, per the Global Constraints: `score()`'s word-boundary test reads
+`haystack[at - 1]`, which `noUncheckedIndexedAccess` types as `string | undefined` while
+`RegExp.test` needs a `string`. `at === 0` is already checked first and short-circuits, so the
+index is always in range — make that explicit rather than asserting it:
+
+```ts
+const previous = at === 0 ? undefined : haystack[at - 1];
+const atWordStart = previous === undefined || /[\s(«"'\-–—/]/.test(previous);
+``` Changes:
 
 ```ts
 /** Flattens a block to the text worth searching; `null` when it has none. */
