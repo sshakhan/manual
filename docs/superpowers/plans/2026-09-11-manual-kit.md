@@ -76,6 +76,7 @@ Expected: FAIL — there is no `package.json` yet, so the command itself errors 
   "version": "0.1.0",
   "description": "Reusable, themeable shell for Evrika product manuals",
   "license": "UNLICENSED",
+  "private": false,
   "type": "module",
   "files": ["dist"],
   "main": "./dist/index.js",
