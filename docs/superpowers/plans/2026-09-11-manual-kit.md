@@ -4494,7 +4494,8 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 ### Task 21: CLI — scaffolding a new manual
 
 **Files:**
-- Create: `src/cli/scaffold.ts`, `src/cli/templates/` (the files it writes)
+- Create: `src/cli/scaffold.ts`
+- Modify: `src/cli/index.ts` — add the `new-manual` case and the `scaffold` import Task 20 deliberately left out
 - Test: `src/cli/scaffold.test.ts`
 
 **Interfaces:**
