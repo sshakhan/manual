@@ -69,19 +69,27 @@ export function Manual<L extends string, B extends AnyBlock>({
 
   return (
     <ManualProvider value={value}>
-      {/* `.manual` is the container query root — the shell reflows by its own
-          width, so it works embedded in a panel and not only full-page. */}
+      {/*
+        `.manual` establishes the container; `.manual-layout` is what reflows.
+        Two elements, not one, because an element can never be the subject of
+        its own container query — the query resolves against ancestors, so a
+        `.manual` that both declares `container: manual` and queries it for
+        its own `display` would simply never match, and the shell would stay
+        a three-column row at every width.
+      */}
       <div className="manual">
-        <Sidebar
-          config={config}
-          route={route}
-          onNavigate={navigate}
-          onLocaleChange={setLocale}
-        />
-        {/* Content and the rail are siblings of the sidebar: three columns on a
-            wide window, and the rail moves above the text on a narrow one,
-            purely in CSS. */}
-        <ChapterView config={config} route={route} />
+        <div className="manual-layout">
+          <Sidebar
+            config={config}
+            route={route}
+            onNavigate={navigate}
+            onLocaleChange={setLocale}
+          />
+          {/* Content and the rail are siblings of the sidebar: three columns
+              on a wide window, and the rail moves above the text on a narrow
+              one, purely in CSS. */}
+          <ChapterView config={config} route={route} />
+        </div>
       </div>
     </ManualProvider>
   );

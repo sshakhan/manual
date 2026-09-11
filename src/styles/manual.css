@@ -25,6 +25,7 @@
     font-family: var(--manual-font);
     font-size: var(--manual-step-0);
     line-height: 1.6;
+    min-block-size: 100vh;
   }
 
   /* A heading is read before it is looked at; let the wrapped lines be even. */
@@ -57,15 +58,20 @@
    * manual's anchor, and a reader looks for it at the edge of the window,
    * not floating somewhere inside it on a wide monitor.
    *
-   * `.manual` is also the container-query root: the shell reflows by its own
-   * inline size rather than the viewport's, so it keeps working embedded in
-   * a panel and not only full-page — a media query cannot express that.
+   * `.manual` establishes the container query root; `.manual-layout` is the
+   * element that reflows in response to it. Two elements, not one — an
+   * element can never be the subject of its own container query (the query
+   * resolves against ancestors, excluding the querying element itself), so a
+   * single `.manual` that both declared `container: manual` and queried it
+   * for its own `display` would simply never match, at any width.
    */
   .manual {
     container: manual / inline-size;
+  }
+
+  .manual-layout {
     display: flex;
     align-items: flex-start;
-    min-block-size: 100vh;
 
     /*
      * Below three columns' worth of room the rail moves above the chapter,
@@ -549,6 +555,16 @@
       padding-inline-start: 0;
       border-inline-start: 0;
 
+      /*
+       * Repeated rather than relied on cascade order: `&[data-level='3']`
+       * above is specificity (0,2,0) against this reset's (0,1,0), so without
+       * restating the attribute selector here a level-3 link would keep its
+       * 29px indent at this tier while its level-2 siblings went flush.
+       */
+      &[data-level='3'] {
+        padding-inline-start: 0;
+      }
+
       &.rail-link-active {
         text-decoration: underline;
         text-underline-offset: 3px;
@@ -582,16 +598,21 @@
     margin: 0 0 var(--manual-space-4);
     padding-block-end: var(--manual-space-3);
     border-block-end: 1px solid var(--manual-line);
-    /*
-     * `--manual-step-3`'s own clamp() already floors at 1.5rem (24px), which
-     * is exactly the reference's narrow-window override — the token does the
-     * narrowing on its own, cqi-driven by `.manual`'s container, so no
-     * separate container query is needed here.
-     */
     font-size: var(--manual-step-3);
     font-weight: 800;
     line-height: 1.25;
     letter-spacing: -0.01em;
+
+    /*
+     * `--manual-step-3`'s clamp() preferred value is `1.2rem + 1.4cqi`, which
+     * only reaches its 1.5rem floor below roughly a 343px container — at the
+     * 900px tablet/mobile tier it is still pinned at its 1.875rem ceiling.
+     * The reference's narrower chapter title is therefore an explicit
+     * override, not something the token produces on its own.
+     */
+    @container manual (inline-size < 900px) {
+      font-size: 1.5rem;
+    }
   }
 
   /* ---------- headings ---------- */
@@ -977,7 +998,7 @@
       display: none;
     }
 
-    .manual {
+    .manual-layout {
       display: block;
     }
 
