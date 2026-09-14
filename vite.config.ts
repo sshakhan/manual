@@ -45,16 +45,19 @@ export default defineConfig({
      * one realm against the constructor from the other and rejects a
      * perfectly good result.
      *
-     * `src/cli/**` needs `node` for an unrelated reason: jsdom virtualises
-     * `import.meta.url` to something that is not a `file:` URL, so
-     * `fileURLToPath(new URL(..., import.meta.url))` — how the CLI tests
-     * locate their fixtures — throws under it. None of these suites touch the
-     * DOM, so `node` sidesteps both problems.
+     * `src/cli/**` and `src/docs.test.ts` need `node` for an unrelated
+     * reason: jsdom virtualises `import.meta.url` to something that is not a
+     * `file:` URL, so `new URL(..., import.meta.url)` resolves against
+     * `http://localhost:3000` instead of the filesystem — the CLI tests hit
+     * this locating their fixtures, and `docs.test.ts` hits it the same way
+     * reading `README.md` and `docs/tokens.md`. None of these suites touch
+     * the DOM, so `node` sidesteps both problems.
      */
     environmentMatchGlobs: [
       ['src/vite/**', 'node'],
       ['src/build.test.ts', 'node'],
       ['src/cli/**', 'node'],
+      ['src/docs.test.ts', 'node'],
     ],
     globals: true,
     include: ['src/**/*.test.{ts,tsx}', 'example/**/*.test.{ts,tsx}'],
