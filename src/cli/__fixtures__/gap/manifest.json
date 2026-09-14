@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "locales": ["ru", "kk"],
+  "chapters": [
+    { "id": "intro", "file": "01-intro.json" },
+    { "id": "payment", "file": "02-payment.json" }
+  ]
+}

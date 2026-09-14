@@ -24,7 +24,10 @@
      * to the same target or the example would only ever typecheck against a
      * (possibly stale) `dist/`.
      */
-    "paths": { "@evrika/manual-kit": ["./src/index.ts"] }
+    "paths": {
+      "@evrika/manual-kit": ["./src/index.ts"],
+      "@evrika/manual-kit/validate": ["./src/cli/public.ts"]
+    }
   },
   "include": ["src", "example", "vite.config.ts"]
 }

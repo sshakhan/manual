@@ -1,0 +1,7 @@
+{
+  "id": "payment",
+  "title": "Оплата",
+  "blocks": [
+    { "type": "heading", "level": 2, "id": "details", "text": "Детали оплаты" }
+  ]
+}

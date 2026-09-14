@@ -14,6 +14,7 @@ describe('package exports', () => {
   it.each([
     ['dist/index.js'], ['dist/index.d.ts'],
     ['dist/styles.css'], ['dist/vite.js'], ['dist/vite.d.ts'],
+    ['dist/validate.js'], ['dist/validate.d.ts'],
   ])('produces %s', (path) => {
     expect(existsSync(new URL(`../${path}`, import.meta.url)), `${path} — run npm run build`).toBe(true);
   });

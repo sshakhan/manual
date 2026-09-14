@@ -18,6 +18,10 @@ export default defineConfig({
         vite: resolve(__dirname, 'src/vite/index.ts'),
         styles: resolve(__dirname, 'src/styles/index.ts'),
         'cli/index': resolve(__dirname, 'src/cli/index.ts'),
+        // A separate entry rather than part of the main barrel: it imports
+        // `ajv`, and a build-time validator has no business being pulled into
+        // every consumer's browser bundle.
+        validate: resolve(__dirname, 'src/cli/public.ts'),
       },
       formats: ['es'],
     },

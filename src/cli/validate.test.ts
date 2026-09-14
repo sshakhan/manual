@@ -8,11 +8,35 @@ import type { BlockBase } from '../content/types';
 const fixture = (name: string) =>
   fileURLToPath(new URL(`./__fixtures__/${name}`, import.meta.url));
 
-const errorsFor = (name: string) => validateContent({ contentDir: fixture(name) });
+const errorsFor = (name: string) => validateContent({ contentDir: fixture(name) }).errors;
+const warningsFor = (name: string) => validateContent({ contentDir: fixture(name) }).warnings;
 
 describe('validateContent on a clean tree', () => {
   it('reports nothing', () => {
     expect(errorsFor('clean')).toEqual([]);
+  });
+
+  it('warns about nothing either', () => {
+    expect(warningsFor('clean')).toEqual([]);
+  });
+});
+
+describe('validateContent on a tree with an intentional translation gap', () => {
+  // A chapter missing from a *non-base* locale is the state
+  // `ContentSource.loadChapter`'s fallback and `ChapterView`'s
+  // `fallbackNotice` exist to serve, not a broken build — so it is reported,
+  // not failed. Only a gap in the base locale (nothing to fall back to)
+  // stays an error; see the `broken` fixture's `missing-file` case, which
+  // is the base-locale version of the same shape.
+  it('has no errors', () => {
+    expect(errorsFor('gap')).toEqual([]);
+  });
+
+  it('warns about the locale missing the chapter, not the base one', () => {
+    const warnings = warningsFor('gap');
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toMatch(/kk\/02-payment\.json/);
+    expect(warnings[0]).toMatch(/перевод отсутствует/);
   });
 });
 
@@ -59,7 +83,7 @@ describe('validateContent with a custom registry', () => {
     expect(validateContent({
       contentDir: fixture('custom'),
       registry: createRegistry([...builtinBlocks, noteBlock]),
-    })).toEqual([]);
+    })).toEqual({ errors: [], warnings: [] });
   });
 
   it('rejects the same content under the default registry', () => {

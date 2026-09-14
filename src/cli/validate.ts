@@ -8,12 +8,14 @@
  * unresolved link is worse than a dead link; why locale parity is structural
  * rather than "the file exists".
  *
- * Three changes from the reference: this returns the error list instead of
- * calling `process.exit` (the exit code moves to `index.ts`, which is what
- * makes this testable); the schema comes from `buildSchema`, not a hand-
- * maintained `content/schema.json`; and two checks the open vocabulary needs
- * that a closed union never had to make — see `unknownBlockType` and
- * `badFilename` below.
+ * Four changes from the reference: this returns `{ errors, warnings }`
+ * instead of calling `process.exit` (the exit code moves to `index.ts`,
+ * which is what makes this testable, and a warning never affects it); the
+ * schema comes from `buildSchema`, not a hand-maintained `content/
+ * schema.json`; two checks the open vocabulary needs that a closed union
+ * never had to make — see `unknownBlockType` and `badFilename` below; and a
+ * chapter missing from a non-base locale is a warning, not an error — see
+ * the missing-file loop below for why.
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -70,13 +72,24 @@ const LINK = /\[[^\]]+\]\(#([a-z0-9-]+(?:\/[a-z0-9-]+)?)\)/g;
 // `BlockRegistry<any>` for the reason documented in `schema.ts`'s `buildSchema`:
 // `BlockSpec<T>` is invariant in `T`, so a caller's concrete registry (e.g.
 // `BlockRegistry<BuiltinBlock>`) is not assignable to `BlockRegistry<AnyBlock>`.
-export function validateContent(options: { contentDir: string; registry?: BlockRegistry<any> }): string[] {
+export interface ValidationResult {
+  errors: string[];
+  warnings: string[];
+}
+
+export function validateContent(
+  options: { contentDir: string; registry?: BlockRegistry<any> },
+): ValidationResult {
   const { contentDir } = options;
   const registry = options.registry ?? defaultRegistry;
 
   const errors: string[] = [];
+  const warnings: string[] = [];
   const fail = (message: string): void => {
     errors.push(message);
+  };
+  const warn = (message: string): void => {
+    warnings.push(message);
   };
 
   const manifest = readJson<RawManifest>(join(contentDir, 'manifest.json'));
@@ -142,7 +155,20 @@ export function validateContent(options: { contentDir: string; registry?: BlockR
       const path = join(contentDir, locale, entry.file);
 
       if (!existsSync(path)) {
-        fail(messages.missingFile(locale, entry.file));
+        /*
+         * A gap in the base locale has nothing to fall back to — that is
+         * still an error. A gap in any other locale is exactly the state
+         * `ContentSource.loadChapter` is built to serve: it falls back to
+         * the base locale and `ChapterView` renders `fallbackNotice`. A
+         * manual mid-translation is a real, supported shape, not a broken
+         * one, so this is reported rather than failed — the design doc
+         * (line 358) calls this out explicitly.
+         */
+        if (locale === baseLocale) {
+          fail(messages.missingFile(locale, entry.file));
+        } else {
+          warn(messages.missingTranslation(locale, entry.file));
+        }
         continue;
       }
 
@@ -310,5 +336,5 @@ export function validateContent(options: { contentDir: string; registry?: BlockR
     }
   }
 
-  return errors;
+  return { errors, warnings };
 }

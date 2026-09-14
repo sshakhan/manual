@@ -12,6 +12,15 @@ export function missingFile(locale: string, file: string): string {
   return `${locale}/${file}: файла нет, а он объявлен в manifest.json`;
 }
 
+/**
+ * The non-error twin of `missingFile`, for every locale but the base one: a
+ * gap here is what `ContentSource.loadChapter`'s fallback and `ChapterView`'s
+ * `fallbackNotice` are built to serve, not a broken build.
+ */
+export function missingTranslation(locale: string, file: string): string {
+  return `${locale}/${file}: перевод отсутствует — будет показан запасной текст`;
+}
+
 export function schemaError(
   locale: string,
   file: string,

@@ -1,0 +1,7 @@
+{
+  "id": "missing-file",
+  "title": "Файл только в kk",
+  "blocks": [
+    { "type": "paragraph", "text": "Бұл тарау орысшада жоқ." }
+  ]
+}
