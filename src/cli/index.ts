@@ -5,6 +5,7 @@ import { argv, cwd, exit } from 'node:process';
 import { buildSchema } from './schema';
 import { validateContent } from './validate';
 import { defaultRegistry } from '../blocks/builtin';
+import { scaffold } from './scaffold';
 
 const [command, ...rest] = argv.slice(2);
 
@@ -31,6 +32,15 @@ switch (command) {
     const path = join(contentDir, 'schema.json');
     writeFileSync(path, `${JSON.stringify(buildSchema(defaultRegistry), null, 2)}\n`);
     console.log(`Схема записана: ${path}`);
+    break;
+  }
+  case 'new-manual': {
+    if (!rest[0]) {
+      console.error('manual-kit new-manual <dir>');
+      exit(1);
+      break;
+    }
+    scaffold(rest[0]);
     break;
   }
   default:
