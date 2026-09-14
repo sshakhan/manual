@@ -93,7 +93,7 @@ export function createRegistry<B extends AnyBlock = AnyBlock>(
   return {
     get: (type) => byType.get(type),
     has: (type) => byType.has(type),
-    types: () => ordered.map((spec) => String(spec.type)),
+    types: () => ordered.map((spec) => spec.type),
     specs: () => ordered,
   };
 }

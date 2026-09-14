@@ -26,6 +26,12 @@ export function buildSchema(registry: BlockRegistry<any>, id = 'https://evrika.c
     required: ['id', 'title', 'blocks'],
     additionalProperties: false,
     properties: {
+      // Optional, and not in `required`: this is the `"$schema":
+      // "./schema.json"` a chapter file carries for editor autocomplete, not
+      // a value the content itself needs. Without it here,
+      // `additionalProperties: false` would reject the very reference the
+      // spec promises every chapter keeps.
+      $schema: { type: 'string' },
       id: { type: 'string', pattern: '^[a-z0-9-]+$' },
       title: { type: 'string', minLength: 1 },
       blocks: { type: 'array', items: { $ref: '#/definitions/block' } },

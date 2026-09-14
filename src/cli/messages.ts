@@ -21,6 +21,16 @@ export function missingTranslation(locale: string, file: string): string {
   return `${locale}/${file}: перевод отсутствует — будет показан запасной текст`;
 }
 
+/**
+ * The strict-mode twin of `missingTranslation`: raised instead of it when
+ * the caller passed `allowedGaps` and this locale/chapter pair is not on the
+ * list — an undocumented gap is a translator's oversight, not a designed
+ * fallback.
+ */
+export function unexpectedTranslationGap(locale: string, file: string): string {
+  return `${locale}/${file}: перевод отсутствует и не входит в список допустимых пробелов (allowedGaps)`;
+}
+
 export function schemaError(
   locale: string,
   file: string,

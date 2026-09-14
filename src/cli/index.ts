@@ -17,9 +17,17 @@ const [command, ...rest] = argv.slice(2);
  */
 const contentDir = rest.find((arg) => !arg.startsWith('-')) ?? join(cwd(), 'content');
 
+/**
+ * An *absent* `allowedGaps` is what keeps every translation gap a warning —
+ * the default a consumer with no flag still gets. `--strict` passes an
+ * empty `allowedGaps` rather than omitting the option, which is what turns
+ * every gap into an error instead: see `validateContent`'s own doc comment.
+ */
+const strict = rest.includes('--strict');
+
 switch (command) {
   case 'validate': {
-    const { errors, warnings } = validateContent({ contentDir });
+    const { errors, warnings } = validateContent(strict ? { contentDir, allowedGaps: [] } : { contentDir });
     // Warnings get their own heading rather than being folded into the error
     // list — a translation gap read alongside a schema violation looks like
     // one undifferentiated wall of red, and only one of the two should ever
@@ -50,7 +58,7 @@ switch (command) {
       exit(1);
       break;
     }
-    scaffold(rest[0]);
+    for (const path of scaffold(rest[0])) console.log(path);
     break;
   }
   default:

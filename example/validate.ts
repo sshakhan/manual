@@ -9,7 +9,16 @@ import { shortcutBlock } from './src/blocks/shortcut';
 // `validate` command only ever has the default registry to offer.
 const registry = createRegistry([...builtinBlocks, shortcutBlock]);
 const contentDir = fileURLToPath(new URL('./content', import.meta.url));
-const { errors, warnings } = validateContent({ contentDir, registry });
+
+// Named rather than left to the lenient default: this is the one gap the
+// example keeps on purpose (`kk/02-shortcuts.json`), so it is listed here
+// instead of relying on "every gap is fine" — the shape the two real
+// manuals also use in strict mode, minus the emptiness of their list.
+const { errors, warnings } = validateContent({
+  contentDir,
+  registry,
+  allowedGaps: [{ locale: 'kk', chapterId: 'shortcuts' }],
+});
 
 // A translation gap (the example keeps one on purpose) is a warning, not an
 // error — see `validateContent`'s own doc comment for why — so it is printed

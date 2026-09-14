@@ -13,8 +13,8 @@ export type BuiltinLocale = (typeof BUILTIN_LOCALES)[number];
 
 /**
  * A language's own name is never translated. The Kazakh one is spelled the way
- * the apps themselves spell it (`languageNameKk` in the delivery app's `l10n`),
- * so a reader meets one name for the language rather than two.
+ * the apps themselves spell it (`profileLanguageKazakh` in the delivery app's
+ * `l10n`), so a reader meets one name for the language rather than two.
  */
 export const BUILTIN_LOCALE_LABELS: Record<BuiltinLocale, string> = {
   ru: 'Русский',

@@ -14,8 +14,9 @@
  * schema comes from `buildSchema`, not a hand-maintained `content/
  * schema.json`; two checks the open vocabulary needs that a closed union
  * never had to make — see `unknownBlockType` and `badFilename` below; and a
- * chapter missing from a non-base locale is a warning, not an error — see
- * the missing-file loop below for why.
+ * chapter missing from a non-base locale is a warning by default, not an
+ * error — see the missing-file loop below for why, and `allowedGaps` for how
+ * a caller narrows that back down.
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -77,11 +78,30 @@ export interface ValidationResult {
   warnings: string[];
 }
 
+/** One chapter, in one non-base locale, that is missing on purpose. */
+export interface AllowedGap {
+  locale: string;
+  chapterId: string;
+}
+
 export function validateContent(
-  options: { contentDir: string; registry?: BlockRegistry<any> },
+  options: { contentDir: string; registry?: BlockRegistry<any>; allowedGaps?: AllowedGap[] },
 ): ValidationResult {
   const { contentDir } = options;
   const registry = options.registry ?? defaultRegistry;
+
+  /*
+   * Undefined (the default) keeps every gap a warning — the behaviour this
+   * package shipped with. Passing `allowedGaps`, even as `[]`, switches to
+   * strict mode: only the gaps named here stay warnings, every other one
+   * becomes an error. That is what the two manuals this package serves need
+   * — both are fully translated today, so an unnamed gap is a translator's
+   * mistake, not a documented one, and "it still prints a warning" is not a
+   * mitigation in a CI job nobody reads when it's green.
+   */
+  const allowedGaps = options.allowedGaps;
+  const isAllowedGap = (locale: string, chapterId: string): boolean =>
+    (allowedGaps ?? []).some((gap) => gap.locale === locale && gap.chapterId === chapterId);
 
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -162,12 +182,17 @@ export function validateContent(
          * the base locale and `ChapterView` renders `fallbackNotice`. A
          * manual mid-translation is a real, supported shape, not a broken
          * one, so this is reported rather than failed — the design doc
-         * (line 358) calls this out explicitly.
+         * (line 358) calls this out explicitly — *when the gap is
+         * intentional*. Without `allowedGaps`, every gap qualifies (the
+         * package's original, lenient behaviour); with it, only a named one
+         * does, and an unnamed gap is treated the same as a base-locale gap.
          */
         if (locale === baseLocale) {
           fail(messages.missingFile(locale, entry.file));
-        } else {
+        } else if (allowedGaps === undefined || isAllowedGap(locale, entry.id)) {
           warn(messages.missingTranslation(locale, entry.file));
+        } else {
+          fail(messages.unexpectedTranslationGap(locale, entry.file));
         }
         continue;
       }

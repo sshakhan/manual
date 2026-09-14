@@ -40,6 +40,45 @@ describe('validateContent on a tree with an intentional translation gap', () => 
   });
 });
 
+describe('validateContent with allowedGaps', () => {
+  // Omitting the option entirely must stay exactly as lenient as before —
+  // the two tests above already cover that. These cover what changes once a
+  // caller opts in.
+  it('leaves the default (no allowedGaps) untouched', () => {
+    expect(validateContent({ contentDir: fixture('gap') })).toEqual({
+      errors: [],
+      warnings: [expect.stringMatching(/kk\/02-payment\.json.*перевод отсутствует/)],
+    });
+  });
+
+  it('still warns, not fails, on a gap that is named as allowed', () => {
+    const result = validateContent({
+      contentDir: fixture('gap'),
+      allowedGaps: [{ locale: 'kk', chapterId: 'payment' }],
+    });
+    expect(result.errors).toEqual([]);
+    expect(result.warnings).toHaveLength(1);
+    expect(result.warnings[0]).toMatch(/перевод отсутствует/);
+  });
+
+  it('fails an unnamed gap once allowedGaps is passed, even as []', () => {
+    const result = validateContent({ contentDir: fixture('gap'), allowedGaps: [] });
+    expect(result.warnings).toEqual([]);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]).toMatch(/kk\/02-payment\.json/);
+    expect(result.errors[0]).toMatch(/не входит в список допустимых пробелов/);
+  });
+
+  it('does not let an allowed gap in one locale excuse a different, unnamed one', () => {
+    const result = validateContent({
+      contentDir: fixture('gap'),
+      allowedGaps: [{ locale: 'kk', chapterId: 'intro' }],
+    });
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]).toMatch(/kk\/02-payment\.json/);
+  });
+});
+
 describe('validateContent on a broken tree', () => {
   const errors = errorsFor('broken').join('\n');
 

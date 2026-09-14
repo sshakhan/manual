@@ -36,6 +36,18 @@ describe('buildSchema', () => {
     })).toBe(true);
   });
 
+  it('accepts a chapter carrying its own $schema reference', () => {
+    // The spec's editor-autocomplete convenience (`"$schema": "./schema.json"`
+    // in the chapter file itself) is undeliverable if the generated schema
+    // does not know the property — `additionalProperties: false` would
+    // reject it like any other unknown key.
+    expect(validate({
+      $schema: './schema.json',
+      id: 'payment', title: 'Оплата',
+      blocks: [{ type: 'paragraph', text: 'тело' }],
+    })).toBe(true);
+  });
+
   it('rejects a chapter missing its title', () => {
     expect(validate({ id: 'a', blocks: [] })).toBe(false);
   });
