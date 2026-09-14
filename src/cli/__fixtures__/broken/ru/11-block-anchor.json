@@ -1,0 +1,8 @@
+{
+  "id": "block-anchor-mismatch",
+  "title": "Разные якоря блоков",
+  "blocks": [
+    { "type": "heading", "level": 2, "id": "overview", "text": "Обзор" },
+    { "type": "paragraph", "id": "details", "text": "Абзац в ru." }
+  ]
+}

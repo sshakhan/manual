@@ -30,14 +30,15 @@ describe('validateContent on a broken tree', () => {
     ['a locale with a different block count', /блоков/],
     ['a locale with a different block type', /в ru — /],
     ['a block type no spec renders', /неизвестный тип блока/],
-    ['a chapter that breaks the schema', /schema|схем/i],
+    ['a chapter that breaks the schema', /required property/],
     ['a manifest file naming a subdirectory', /не должно содержать/],
+    ['a locale with a different anchor id on an otherwise identical block', /блок #\d+ — якорь/],
   ])('catches %s', (_label, pattern) => {
     expect(errors).toMatch(pattern);
   });
 
   it('finds every one of them in a single pass, not just the first', () => {
-    expect(errorsFor('broken').length).toBeGreaterThanOrEqual(12);
+    expect(errorsFor('broken').length).toBeGreaterThanOrEqual(13);
   });
 });
 

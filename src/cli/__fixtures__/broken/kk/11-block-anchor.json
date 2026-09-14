@@ -1,0 +1,8 @@
+{
+  "id": "block-anchor-mismatch",
+  "title": "Блоктардың әр түрлі якорьлері",
+  "blocks": [
+    { "type": "heading", "level": 2, "id": "overview", "text": "Шолу" },
+    { "type": "paragraph", "id": "details-kk", "text": "Абзац kk-де." }
+  ]
+}

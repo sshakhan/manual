@@ -12,6 +12,7 @@
     { "id": "block-type-mismatch", "file": "08-block-type.json" },
     { "id": "unknown-type", "file": "09-unknown-type.json" },
     { "id": "schema-violation", "file": "10-schema-violation.json" },
+    { "id": "block-anchor-mismatch", "file": "11-block-anchor.json" },
     { "id": "bad-filename", "file": "sub/bad.json" }
   ]
 }
