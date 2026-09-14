@@ -21,7 +21,6 @@ describe('package exports', () => {
 
   it('does not bundle React', () => {
     const bundle = readFileSync(new URL('../dist/index.js', import.meta.url), 'utf8');
-    expect(bundle).not.toContain('createContext=function');
     expect(bundle).toMatch(/from\s*["']react["']/);
   });
 

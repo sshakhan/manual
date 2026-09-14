@@ -19,7 +19,7 @@
   "scripts": {
     "build": "npm run typecheck && vite build",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "npm run build && vitest run",
     "test:watch": "vitest",
     "example": "vite --config example/vite.config.ts",
     "example:validate": "vite-node --config example/vite.config.ts example/validate.ts"
