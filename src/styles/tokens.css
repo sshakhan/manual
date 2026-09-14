@@ -88,9 +88,6 @@
     --manual-step-small: 0.875rem;
     --manual-step-tiny: 0.78rem;
 
-    --manual-breakpoint-narrow: 900px;
-    --manual-breakpoint-wide: 1200px;
-
     color-scheme: light;
   }
 

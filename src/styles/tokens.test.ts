@@ -19,8 +19,14 @@ const CONTRACT = [
   '--manual-space-4', '--manual-space-5', '--manual-space-6',
   '--manual-step-0', '--manual-step-1', '--manual-step-2', '--manual-step-3',
   '--manual-step-small', '--manual-step-tiny',
-  '--manual-breakpoint-narrow', '--manual-breakpoint-wide',
 ];
+
+/*
+ * There are deliberately no `--manual-breakpoint-*` tokens. CSS does not allow
+ * a custom property inside a container-query condition, so a token there could
+ * be overridden and change nothing — a worse outcome than not offering one,
+ * because the consumer has no way to tell it did not work.
+ */
 
 describe('token contract', () => {
   it('declares every documented token', () => {

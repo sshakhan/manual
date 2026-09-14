@@ -47,6 +47,12 @@ describe('scaffold', () => {
     expect(theme).not.toContain('@layer');
   });
 
+  it("resets the page's own body margin, since the shell only styles its own subtree", () => {
+    scaffold(dir);
+    const theme = readFileSync(join(dir, 'src/theme.css'), 'utf8');
+    expect(theme).toMatch(/body\s*\{[^}]*margin:\s*0/);
+  });
+
   it('writes a manifest and a first chapter in both locales', () => {
     scaffold(dir);
     const manifest = JSON.parse(readFileSync(join(dir, 'content/manifest.json'), 'utf8'));

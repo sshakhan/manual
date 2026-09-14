@@ -51,9 +51,19 @@ const INDEX_HTML = `<!doctype html>
  * unlayered CSS always outranks every layer regardless of source order or
  * specificity — so this file wins with no `!important` and no knowledge of
  * the shell's layer order.
+ *
+ * `body { margin: 0 }` is here, not in the library: the library styles only
+ * its own subtree (`@layer base` is scoped to `.manual`, never `body`), so an
+ * embedded shell cannot restyle its host. A scaffolded manual is a full page,
+ * not an embedded one, so the page's own reset has to come from the page —
+ * this file is that page's own stylesheet.
  */
 const THEME_CSS = `:root {
   --manual-brand: oklch(60.5% 0.098 208);
+}
+
+body {
+  margin: 0;
 }
 `;
 
