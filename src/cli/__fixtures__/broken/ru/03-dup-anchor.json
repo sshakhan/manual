@@ -1,0 +1,8 @@
+{
+  "id": "dup-anchor",
+  "title": "Повторяющийся якорь",
+  "blocks": [
+    { "type": "heading", "level": 2, "id": "dup", "text": "Первый" },
+    { "type": "heading", "level": 2, "id": "dup", "text": "Второй" }
+  ]
+}

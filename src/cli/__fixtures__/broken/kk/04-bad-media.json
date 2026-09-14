@@ -1,0 +1,7 @@
+{
+  "id": "bad-media",
+  "title": "Жоқ медиа",
+  "blocks": [
+    { "type": "image", "src": "media/missing-image.svg", "alt": "Файл жоқ" }
+  ]
+}

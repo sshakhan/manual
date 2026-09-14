@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "locales": ["ru"],
+  "chapters": [
+    { "id": "note-chapter", "file": "01-note.json" }
+  ]
+}

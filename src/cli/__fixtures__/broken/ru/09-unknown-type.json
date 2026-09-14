@@ -1,0 +1,8 @@
+{
+  "id": "unknown-type",
+  "title": "Неизвестный тип блока",
+  "blocks": [
+    { "type": "heading", "level": 2, "id": "h1", "text": "Заголовок" },
+    { "type": "unregistered-type", "text": "Никакой spec это не рисует." }
+  ]
+}

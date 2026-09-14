@@ -1,0 +1,7 @@
+{
+  "id": "ghost-anchor",
+  "title": "Жоқ якорьге сілтеме",
+  "blocks": [
+    { "type": "paragraph", "text": "Толығырақ [осы жерден](#ghost) қараңыз." }
+  ]
+}

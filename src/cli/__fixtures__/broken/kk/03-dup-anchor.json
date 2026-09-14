@@ -1,0 +1,8 @@
+{
+  "id": "dup-anchor",
+  "title": "Қайталанатын якорь",
+  "blocks": [
+    { "type": "heading", "level": 2, "id": "dup", "text": "Бірінші" },
+    { "type": "heading", "level": 2, "id": "dup", "text": "Екінші" }
+  ]
+}

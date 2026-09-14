@@ -1,0 +1,8 @@
+{
+  "id": "block-count-mismatch",
+  "title": "Разное число блоков",
+  "blocks": [
+    { "type": "heading", "level": 2, "id": "h1", "text": "Заголовок" },
+    { "type": "paragraph", "text": "Второй блок есть только в ru." }
+  ]
+}

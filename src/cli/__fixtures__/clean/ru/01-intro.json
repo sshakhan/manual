@@ -1,0 +1,9 @@
+{
+  "id": "intro",
+  "title": "Введение",
+  "blocks": [
+    { "type": "heading", "level": 2, "id": "welcome", "text": "Добро пожаловать" },
+    { "type": "paragraph", "text": "Смотрите [оплату](#payment/details) в другой главе." },
+    { "type": "image", "id": "screenshot", "src": "media/ok.svg", "alt": "Экран" }
+  ]
+}

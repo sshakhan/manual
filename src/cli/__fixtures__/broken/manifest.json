@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "locales": ["ru", "kk"],
+  "chapters": [
+    { "id": "missing-file", "file": "01-missing-file.json" },
+    { "id": "id-mismatch", "file": "02-id-mismatch.json" },
+    { "id": "dup-anchor", "file": "03-dup-anchor.json" },
+    { "id": "bad-media", "file": "04-bad-media.json" },
+    { "id": "ghost-anchor", "file": "05-ghost-anchor.json" },
+    { "id": "ghost-chapter-link", "file": "06-ghost-chapter.json" },
+    { "id": "block-count-mismatch", "file": "07-block-count.json" },
+    { "id": "block-type-mismatch", "file": "08-block-type.json" },
+    { "id": "unknown-type", "file": "09-unknown-type.json" },
+    { "id": "schema-violation", "file": "10-schema-violation.json" },
+    { "id": "bad-filename", "file": "sub/bad.json" }
+  ]
+}

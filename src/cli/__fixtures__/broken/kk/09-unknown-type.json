@@ -1,0 +1,8 @@
+{
+  "id": "unknown-type",
+  "title": "Белгісіз блок түрі",
+  "blocks": [
+    { "type": "heading", "level": 2, "id": "h1", "text": "Тақырып" },
+    { "type": "unregistered-type", "text": "Ешбір spec мұны сызбайды." }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "id": "id-mismatch-wrong",
+  "title": "Сәйкес келмейтін id",
+  "blocks": [
+    { "type": "paragraph", "text": "Ішкі id manifest-пен сәйкес келмейді." }
+  ]
+}

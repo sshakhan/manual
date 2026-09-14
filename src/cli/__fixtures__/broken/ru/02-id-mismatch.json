@@ -1,0 +1,7 @@
+{
+  "id": "id-mismatch-wrong",
+  "title": "Несовпадающий id",
+  "blocks": [
+    { "type": "paragraph", "text": "Внутренний id не совпадает с manifest." }
+  ]
+}

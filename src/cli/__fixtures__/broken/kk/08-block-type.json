@@ -1,0 +1,8 @@
+{
+  "id": "block-type-mismatch",
+  "title": "Түрлі блок типтері",
+  "blocks": [
+    { "type": "heading", "level": 2, "id": "h1", "text": "Тақырып" },
+    { "type": "list", "items": ["Тізім kk-де."] }
+  ]
+}

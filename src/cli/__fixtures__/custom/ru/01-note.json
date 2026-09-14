@@ -1,0 +1,7 @@
+{
+  "id": "note-chapter",
+  "title": "Заметки",
+  "blocks": [
+    { "type": "note", "text": "своё" }
+  ]
+}

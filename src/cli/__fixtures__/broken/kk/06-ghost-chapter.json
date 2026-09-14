@@ -1,0 +1,7 @@
+{
+  "id": "ghost-chapter-link",
+  "title": "Жоқ тарауға сілтеме",
+  "blocks": [
+    { "type": "paragraph", "text": "Қар. [басқа тарау](#ghost-chapter/anchor)." }
+  ]
+}

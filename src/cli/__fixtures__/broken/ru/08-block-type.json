@@ -1,0 +1,8 @@
+{
+  "id": "block-type-mismatch",
+  "title": "Разные типы блоков",
+  "blocks": [
+    { "type": "heading", "level": 2, "id": "h1", "text": "Заголовок" },
+    { "type": "paragraph", "text": "Абзац в ru." }
+  ]
+}

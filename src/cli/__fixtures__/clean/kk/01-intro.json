@@ -1,0 +1,9 @@
+{
+  "id": "intro",
+  "title": "Кіріспе",
+  "blocks": [
+    { "type": "heading", "level": 2, "id": "welcome", "text": "Қош келдіңіз" },
+    { "type": "paragraph", "text": "[Төлемді](#payment/details) басқа тараудан қараңыз." },
+    { "type": "image", "id": "screenshot", "src": "media/ok.svg", "alt": "Экран суреті" }
+  ]
+}

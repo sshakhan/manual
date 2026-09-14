@@ -1,0 +1,8 @@
+{
+  "id": "payment",
+  "title": "Төлем",
+  "blocks": [
+    { "type": "heading", "level": 2, "id": "details", "text": "Төлем мәліметтері" },
+    { "type": "paragraph", "text": "Картамен төлеу." }
+  ]
+}

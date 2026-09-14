@@ -1,0 +1,7 @@
+{
+  "id": "missing-file",
+  "title": "Файл только в ru",
+  "blocks": [
+    { "type": "paragraph", "text": "Этой главы нет на казахском." }
+  ]
+}

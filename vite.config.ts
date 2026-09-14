@@ -17,6 +17,7 @@ export default defineConfig({
         index: resolve(__dirname, 'src/index.ts'),
         vite: resolve(__dirname, 'src/vite/index.ts'),
         styles: resolve(__dirname, 'src/styles/index.ts'),
+        'cli/index': resolve(__dirname, 'src/cli/index.ts'),
       },
       formats: ['es'],
     },
@@ -32,15 +33,25 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     /*
-     * These two run under `node`, not the project-wide `jsdom`: both load
-     * `@vitejs/plugin-react` at runtime, which calls esbuild. esbuild's
-     * `TextEncoder` runs against Node's real `Uint8Array`, but jsdom's
-     * environment installs its own `Uint8Array` in the global realm, so
-     * esbuild's `instanceof` check compares a buffer from one realm against
-     * the constructor from the other and rejects a perfectly good result.
-     * Neither suite touches the DOM, so `node` sidesteps the mismatch.
+     * These run under `node`, not the project-wide `jsdom`: `src/vite/**` and
+     * `src/build.test.ts` both load `@vitejs/plugin-react` at runtime, which
+     * calls esbuild. esbuild's `TextEncoder` runs against Node's real
+     * `Uint8Array`, but jsdom's environment installs its own `Uint8Array` in
+     * the global realm, so esbuild's `instanceof` check compares a buffer from
+     * one realm against the constructor from the other and rejects a
+     * perfectly good result.
+     *
+     * `src/cli/**` needs `node` for an unrelated reason: jsdom virtualises
+     * `import.meta.url` to something that is not a `file:` URL, so
+     * `fileURLToPath(new URL(..., import.meta.url))` — how the CLI tests
+     * locate their fixtures — throws under it. None of these suites touch the
+     * DOM, so `node` sidesteps both problems.
      */
-    environmentMatchGlobs: [['src/vite/**', 'node'], ['src/build.test.ts', 'node']],
+    environmentMatchGlobs: [
+      ['src/vite/**', 'node'],
+      ['src/build.test.ts', 'node'],
+      ['src/cli/**', 'node'],
+    ],
     globals: true,
     include: ['src/**/*.test.{ts,tsx}', 'example/**/*.test.{ts,tsx}'],
     setupFiles: ['./vitest.setup.ts'],

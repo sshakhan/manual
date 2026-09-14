@@ -1,0 +1,7 @@
+{
+  "id": "ghost-chapter-link",
+  "title": "Ссылка на несуществующую главу",
+  "blocks": [
+    { "type": "paragraph", "text": "См. [другую главу](#ghost-chapter/anchor)." }
+  ]
+}
