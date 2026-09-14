@@ -40,8 +40,17 @@ describe('the example manual', () => {
   it('finds the custom block by its text, so registry search works end to end', () => {
     const resolved = config();
     const entries = buildEntries(resolved.content.allChapters('ru'), resolved.registry);
-    const hits = search(entries, 'ярлык', { minQueryLength: 2, maxResults: 30 });
+    // Deliberately not a natural word like "ярлык": that substring also
+    // appears in the chapter's own heading and intro paragraph, which are
+    // indexed as their own entries regardless of `shortcutBlock`. A query for
+    // it would still find hits even if `shortcutBlock.searchText` were
+    // deleted outright, proving nothing about the registry's extension path.
+    // "Ctrl+N" only exists in the `shortcut-new` block's own `searchText`
+    // output, so a hit here can only come from the custom block actually
+    // being wired into search. Do not "tidy" this back to a natural word.
+    const hits = search(entries, 'Ctrl+N', { minQueryLength: 2, maxResults: 30 });
     expect(hits.length).toBeGreaterThan(0);
+    expect(hits.some((hit) => hit.chapterId === 'shortcuts' && hit.text.includes('Ctrl+N'))).toBe(true);
   });
 
   it('shows the fallback notice on the chapter Kazakh does not have', () => {

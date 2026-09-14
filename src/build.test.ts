@@ -25,6 +25,18 @@ describe('package exports', () => {
     expect(bundle).toMatch(/from\s*["']react["']/);
   });
 
+  it('does not bundle ajv into the main entry', () => {
+    // True by construction today — `src/index.ts` never reaches into
+    // `src/cli/` — but that is exactly the property a later "convenience"
+    // re-export could regress silently. A build-time validator (`ajv`, plus
+    // the `node:fs`/`node:path` it needs) has no business in a browser
+    // bundle; `validateContent` ships separately as `@evrika/manual-kit/
+    // validate` (`dist/validate.js`) for that reason.
+    const bundle = readFileSync(new URL('../dist/index.js', import.meta.url), 'utf8');
+    expect(bundle).not.toMatch(/from\s*["']ajv["']/);
+    expect(bundle).not.toContain('ajv/dist');
+  });
+
   it('keeps react and react-dom peer, never dependencies', () => {
     expect(Object.keys(pkg.dependencies ?? {})).not.toContain('react');
     expect(Object.keys(pkg.dependencies ?? {})).not.toContain('react-dom');

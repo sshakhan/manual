@@ -12,3 +12,31 @@
   --manual-radius: 10px;
   --manual-content-width: 720px;
 }
+
+/*
+ * `shortcut` is registered by the example, not the library, so the library
+ * has never heard of `.shortcut` and cannot style it — a second-party block's
+ * own stylesheet is exactly where this belongs. Modelled on the built-in
+ * `.keys` rule (label as a small badge, text beside it) so it reads as part
+ * of the same manual rather than as a foreign element. Unlayered, same as
+ * the token overrides above, so it wins with no `@layer` and no
+ * `!important`.
+ */
+.shortcut {
+  display: flex;
+  align-items: baseline;
+  gap: var(--manual-space-3);
+  margin: 0 0 var(--manual-space-4);
+}
+
+.shortcut-label {
+  display: inline-block;
+  padding-block: 2px;
+  padding-inline: 7px;
+  border-radius: var(--manual-radius);
+  background: var(--manual-brand-tint);
+  color: var(--manual-brand-strong);
+  font-family: var(--manual-font-mono);
+  font-size: var(--manual-step-tiny);
+  white-space: nowrap;
+}
