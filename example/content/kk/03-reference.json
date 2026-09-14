@@ -1,0 +1,44 @@
+{
+  "id": "reference",
+  "title": "Анықтамалық",
+  "blocks": [
+    { "type": "heading", "level": 2, "id": "reference-heading", "text": "Анықтамалық" },
+    {
+      "type": "paragraph",
+      "id": "ref-intro",
+      "text": "Барлығын қайта баптау үшін [жұмысты бастауды](#getting-started/welcome) қараңыз."
+    },
+    {
+      "type": "table",
+      "id": "specs",
+      "headers": ["Өріс", "Түрі"],
+      "rows": [
+        ["Аты", "жол"],
+        ["Жасы", "сан"]
+      ]
+    },
+    {
+      "type": "image",
+      "id": "screenshot",
+      "src": "media/screenshot.svg",
+      "alt": "Экран суреті"
+    },
+    {
+      "type": "video",
+      "id": "demo",
+      "src": "media/demo.mp4",
+      "caption": "Жұмыс көрінісі"
+    },
+    {
+      "type": "keys",
+      "id": "save-shortcut",
+      "combo": ["Ctrl", "S"],
+      "text": "Өзгерістерді сақтау"
+    },
+    {
+      "type": "paragraph",
+      "id": "same-chapter-link",
+      "text": "Толығырақ жоғарыда, [кесте](#specs) бөлімінде."
+    }
+  ]
+}

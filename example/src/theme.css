@@ -1,0 +1,14 @@
+/*
+ * Unlayered on purpose — needs no `@layer` and no `!important`. The shell's
+ * own tokens live in `@layer tokens`, and unlayered CSS always outranks every
+ * layer regardless of source order or specificity, so this file wins with no
+ * knowledge of the shell's layer order.
+ *
+ * A different brand hue is the clearest demonstration that overriding tokens
+ * is enough to retheme the whole manual.
+ */
+:root {
+  --manual-brand: oklch(58% 0.16 320);
+  --manual-radius: 10px;
+  --manual-content-width: 720px;
+}

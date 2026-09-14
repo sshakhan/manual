@@ -1,0 +1,44 @@
+{
+  "id": "reference",
+  "title": "Справочник",
+  "blocks": [
+    { "type": "heading", "level": 2, "id": "reference-heading", "text": "Справочник" },
+    {
+      "type": "paragraph",
+      "id": "ref-intro",
+      "text": "См. [начало работы](#getting-started/welcome), чтобы настроить всё заново."
+    },
+    {
+      "type": "table",
+      "id": "specs",
+      "headers": ["Поле", "Тип"],
+      "rows": [
+        ["Имя", "строка"],
+        ["Возраст", "число"]
+      ]
+    },
+    {
+      "type": "image",
+      "id": "screenshot",
+      "src": "media/screenshot.svg",
+      "alt": "Скриншот экрана"
+    },
+    {
+      "type": "video",
+      "id": "demo",
+      "src": "media/demo.mp4",
+      "caption": "Демонстрация работы"
+    },
+    {
+      "type": "keys",
+      "id": "save-shortcut",
+      "combo": ["Ctrl", "S"],
+      "text": "Сохранить изменения"
+    },
+    {
+      "type": "paragraph",
+      "id": "same-chapter-link",
+      "text": "Подробности выше, в разделе [таблицы](#specs)."
+    }
+  ]
+}

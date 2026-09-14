@@ -1,0 +1,24 @@
+{
+  "id": "shortcuts",
+  "title": "Shortcuts",
+  "blocks": [
+    { "type": "heading", "level": 2, "id": "shortcuts-heading", "text": "Quick shortcuts" },
+    {
+      "type": "paragraph",
+      "id": "shortcuts-intro",
+      "text": "These shortcuts speed up everyday work."
+    },
+    {
+      "type": "shortcut",
+      "id": "shortcut-search",
+      "label": "Ctrl+K",
+      "text": "Open shortcut search"
+    },
+    {
+      "type": "shortcut",
+      "id": "shortcut-new",
+      "label": "Ctrl+N",
+      "text": "Create a new delivery"
+    }
+  ]
+}

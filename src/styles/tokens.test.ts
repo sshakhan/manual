@@ -45,7 +45,10 @@ describe('token contract', () => {
   });
 
   it('derives brand tints from the brand rather than hardcoding them', () => {
-    expect(tokens).toMatch(/--manual-brand-tint:\s*color-mix\(/);
+    // `[\s\S]*?` rather than `\s*`: `light-dark()` wraps a light and a dark
+    // `color-mix(...)` (see the dark-mode arithmetic in task 22's report), so
+    // `color-mix(` no longer follows the colon directly.
+    expect(tokens).toMatch(/--manual-brand-tint:[\s\S]*?color-mix\(/);
     expect(tokens).toMatch(/--manual-brand-strong:\s*color-mix\(/);
   });
 

@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "locales": ["ru", "kk", "en"],
+  "chapters": [
+    { "id": "getting-started", "file": "01-getting-started.json" },
+    { "id": "shortcuts", "file": "02-shortcuts.json" },
+    { "id": "reference", "file": "03-reference.json" }
+  ]
+}

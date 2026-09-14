@@ -15,7 +15,16 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "types": ["vitest/globals", "node"]
+    "types": ["vitest/globals", "node"],
+    /*
+     * The example imports the package by name (`@evrika/manual-kit`), the
+     * same as any real consumer, but resolves to source here rather than a
+     * build — Vite does that at the alias in `example/vite.config.ts`. `tsc`
+     * does not read Vite config, so `npm run typecheck` needs its own mapping
+     * to the same target or the example would only ever typecheck against a
+     * (possibly stale) `dist/`.
+     */
+    "paths": { "@evrika/manual-kit": ["./src/index.ts"] }
   },
   "include": ["src", "example", "vite.config.ts"]
 }

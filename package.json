@@ -20,7 +20,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "example": "vite --config example/vite.config.ts"
+    "example": "vite --config example/vite.config.ts",
+    "example:validate": "vite-node example/validate.ts"
   },
   "peerDependencies": {
     "react": ">=18",

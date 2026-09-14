@@ -15,7 +15,20 @@
     /* #019AAC, the desktop app's primary, as oklch. */
     --manual-brand: oklch(60.5% 0.098 208);
     --manual-brand-strong: color-mix(in oklab, var(--manual-brand) 82%, black);
-    --manual-brand-tint: color-mix(in oklab, var(--manual-brand) 12%, var(--manual-surface));
+    /*
+     * The mix percentage is tuned against a white light-mode surface (L=100%):
+     * 12–16% of an L=60–76% accent barely moves the surface's own lightness,
+     * so the tint reads as colour rather than as a grey wash. Against the dark
+     * surface (L=21%) the same percentage lands the four tints within about
+     * ten points of each other and of `--manual-surface-alt` (L=25%) — four
+     * differently-meant callouts all reading as the same dark grey box. Raising
+     * the percentage globally would blow out the light palette instead, so
+     * each tint gets its own dark-mode percentage via `light-dark()`.
+     */
+    --manual-brand-tint: light-dark(
+      color-mix(in oklab, var(--manual-brand) 12%, var(--manual-surface)),
+      color-mix(in oklab, var(--manual-brand) 28%, var(--manual-surface))
+    );
 
     --manual-text: light-dark(oklch(28% 0.02 245), oklch(93% 0.01 245));
     --manual-text-muted: light-dark(oklch(54% 0.02 245), oklch(70% 0.015 245));
@@ -24,11 +37,20 @@
     --manual-line: light-dark(oklch(92% 0.008 210), oklch(32% 0.015 245));
 
     --manual-warning: oklch(76% 0.145 70);
-    --manual-warning-tint: color-mix(in oklab, var(--manual-warning) 16%, var(--manual-surface));
+    --manual-warning-tint: light-dark(
+      color-mix(in oklab, var(--manual-warning) 16%, var(--manual-surface)),
+      color-mix(in oklab, var(--manual-warning) 34%, var(--manual-surface))
+    );
     --manual-danger: oklch(60% 0.19 22);
-    --manual-danger-tint: color-mix(in oklab, var(--manual-danger) 14%, var(--manual-surface));
+    --manual-danger-tint: light-dark(
+      color-mix(in oklab, var(--manual-danger) 14%, var(--manual-surface)),
+      color-mix(in oklab, var(--manual-danger) 30%, var(--manual-surface))
+    );
     --manual-success: oklch(60% 0.14 145);
-    --manual-success-tint: color-mix(in oklab, var(--manual-success) 14%, var(--manual-surface));
+    --manual-success-tint: light-dark(
+      color-mix(in oklab, var(--manual-success) 14%, var(--manual-surface)),
+      color-mix(in oklab, var(--manual-success) 30%, var(--manual-surface))
+    );
 
     /*
      * Fonts are not bundled: a manual is opened in a browser or a webview, and

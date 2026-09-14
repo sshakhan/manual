@@ -1,0 +1,44 @@
+{
+  "id": "reference",
+  "title": "Reference",
+  "blocks": [
+    { "type": "heading", "level": 2, "id": "reference-heading", "text": "Reference" },
+    {
+      "type": "paragraph",
+      "id": "ref-intro",
+      "text": "See [getting started](#getting-started/welcome) to set everything up again."
+    },
+    {
+      "type": "table",
+      "id": "specs",
+      "headers": ["Field", "Type"],
+      "rows": [
+        ["Name", "string"],
+        ["Age", "number"]
+      ]
+    },
+    {
+      "type": "image",
+      "id": "screenshot",
+      "src": "media/screenshot.svg",
+      "alt": "Screenshot"
+    },
+    {
+      "type": "video",
+      "id": "demo",
+      "src": "media/demo.mp4",
+      "caption": "Working demo"
+    },
+    {
+      "type": "keys",
+      "id": "save-shortcut",
+      "combo": ["Ctrl", "S"],
+      "text": "Save your changes"
+    },
+    {
+      "type": "paragraph",
+      "id": "same-chapter-link",
+      "text": "Details above, in the [table](#specs)."
+    }
+  ]
+}

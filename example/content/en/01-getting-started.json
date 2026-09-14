@@ -1,0 +1,47 @@
+{
+  "id": "getting-started",
+  "title": "Getting started",
+  "blocks": [
+    {
+      "type": "heading",
+      "level": 2,
+      "id": "welcome",
+      "text": "Welcome"
+    },
+    {
+      "type": "paragraph",
+      "id": "intro",
+      "text": "The full field list is described in the [reference](#reference/specs)."
+    },
+    {
+      "type": "list",
+      "id": "features",
+      "items": [
+        "Fast delivery",
+        "Order tracking",
+        "24/7 support"
+      ]
+    },
+    {
+      "type": "steps",
+      "id": "setup-steps",
+      "items": [
+        "Download the app",
+        "Sign in with your account",
+        "Start working"
+      ]
+    },
+    {
+      "type": "callout",
+      "id": "tip",
+      "variant": "info",
+      "text": "This is a one-time setup — after it you will **not need** to repeat these steps."
+    },
+    {
+      "type": "shortcut",
+      "id": "quick-open",
+      "label": "Ctrl+K",
+      "text": "Open quick search right from the first screen"
+    }
+  ]
+}
