@@ -14,6 +14,17 @@
 }
 
 /*
+ * `body { margin: 0 }` is here, not in the library: the library styles only
+ * its own subtree (`@layer base` is scoped to `.manual`, never `body`), so an
+ * embedded shell cannot restyle its host. This example is a full page, not
+ * an embedded one, so the page's own reset has to come from the page — this
+ * file is that page's own stylesheet.
+ */
+body {
+  margin: 0;
+}
+
+/*
  * `shortcut` is registered by the example, not the library, so the library
  * has never heard of `.shortcut` and cannot style it — a second-party block's
  * own stylesheet is exactly where this belongs. Modelled on the built-in
