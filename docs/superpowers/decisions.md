@@ -1,6 +1,6 @@
 # Decisions taken during implementation
 
-Twenty-one design rulings were made while building this package, each because the
+Thirty-one design rulings were made while building this package, each because the
 implementation met something the plan got wrong or did not anticipate. They are recorded here
 because the *reasoning* for most of them exists nowhere in the code — a comment can say what a
 line does, but not which alternative was rejected and why.
