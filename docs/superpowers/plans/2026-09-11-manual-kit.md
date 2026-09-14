@@ -110,6 +110,7 @@ Expected: FAIL — there is no `package.json` yet, so the command itself errors 
   "exports": {
     ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
     "./styles.css": "./dist/styles.css",
+    "./validate": { "types": "./dist/validate.d.ts", "import": "./dist/validate.js" },
     "./vite": { "types": "./dist/vite.d.ts", "import": "./dist/vite.js" },
     "./package.json": "./package.json"
   },
@@ -189,6 +190,10 @@ export default defineConfig({
     lib: {
       entry: {
         index: resolve(__dirname, 'src/index.ts'),
+        // A separate entry rather than part of the main barrel: it imports
+        // `ajv`, and a build-time validator has no business being pulled into
+        // every consumer's browser bundle.
+        validate: resolve(__dirname, 'src/cli/public.ts'),
         vite: resolve(__dirname, 'src/vite/index.ts'),
         'cli/index': resolve(__dirname, 'src/cli/index.ts'),
       },
@@ -4393,7 +4398,14 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 - Consumes: `BlockRegistry`, `builtinBlocks`, `createRegistry` (Tasks 3, 10).
 - Produces:
   - `function buildSchema(registry: BlockRegistry): JsonSchema` — root `definitions` plus one `oneOf` branch per registered block
-  - `function validateContent(options: { contentDir: string; registry?: BlockRegistry }): string[]` — the error list, empty when clean
+  - `function validateContent(options: { contentDir: string; registry?: BlockRegistry }): { errors: string[]; warnings: string[] }`
+    — **two lists, not one.** A chapter *missing* from a non-base locale is a `warning`: it is a
+    designed, shipped state, which is why `loadChapter` falls back and `ChapterView` renders
+    `strings.fallbackNotice`. A chapter *present in both locales but structurally divergent*
+    (block count, block type, anchor id) stays an `error` — that is the half-translated release
+    parity exists to catch, where a Kazakh till silently loses a step from a payment flow.
+    Only `errors` sets the exit code. The spec says parity is "reported rather than failed when a
+    gap is intentional"; this is what makes that true.
   - `src/cli/index.ts` — an executable dispatching `validate`, `schema`, `new-manual`
 
 Ports every check the reference validator does, and adds one the open vocabulary needs: a block type absent from the registry. That check is what replaces the `never` exhaustiveness guard lost with the closed union.
@@ -5144,7 +5156,11 @@ Sections, in this order:
 6. **Локали** — how to add a third, what has to be supplied (label + all twelve strings, listed), and how partial string overrides merge.
 7. **Темизация** — point at `docs/tokens.md`; explain in two sentences why an unlayered `theme.css` wins the cascade and needs no `!important`; show a brand override; explain `colorScheme`.
 8. **Сборка и выкладка** — `manualViteConfig()`, why the build is a single file, and that Firebase hosting config stays per app (with each app's existing `target` arrangement named, since that trips people up).
-9. **CLI** — all three commands, and how to pass a custom registry to `validateContent` from a small script.
+9. **CLI** — all three commands, and how to pass a custom registry to `validateContent` from a
+   small script, importing it from `@evrika/manual-kit/validate` (a separate entry point, so
+   `ajv` never reaches a browser bundle). Show that a missing chapter in a non-base locale is
+   reported as a warning and does not fail the run, while structural divergence between two
+   translated copies does.
 10. **Разработка пакета** — `npm test`, `npm run example`, `npm run build`.
 11. **Миграция существующих руководств** — a pointer to `docs/migration.md`.
 
