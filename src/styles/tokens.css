@@ -12,8 +12,10 @@
   @property --manual-rail-width    { syntax: '<length>'; inherits: true; initial-value: 240px; }
 
   :root {
-    /* #019AAC, the desktop app's primary, as oklch. */
-    --manual-brand: oklch(60.5% 0.098 208);
+    /* #019AAC, the desktop app's primary, converted to oklch — round-trips back
+     to #019aac exactly. An earlier approximation landed on #1c92a0, which is a
+     visibly greyer teal. */
+    --manual-brand: oklch(62.8% 0.108 209.3);
     --manual-brand-strong: color-mix(in oklab, var(--manual-brand) 82%, black);
     /*
      * The mix percentage is tuned against a white light-mode surface (L=100%):

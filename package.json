@@ -1,6 +1,6 @@
 {
   "name": "@evrika/manual-kit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Reusable, themeable shell for Evrika product manuals",
   "license": "UNLICENSED",
   "private": false,
