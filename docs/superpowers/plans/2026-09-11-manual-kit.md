@@ -3927,8 +3927,14 @@ const CONTRACT = [
   '--manual-space-4', '--manual-space-5', '--manual-space-6',
   '--manual-step-0', '--manual-step-1', '--manual-step-2', '--manual-step-3',
   '--manual-step-small', '--manual-step-tiny',
-  '--manual-breakpoint-narrow', '--manual-breakpoint-wide',
 ];
+
+/*
+ * There are deliberately no `--manual-breakpoint-*` tokens. CSS does not allow
+ * a custom property inside a container-query condition, so a token there could
+ * be overridden and change nothing — a worse outcome than not offering one,
+ * because the consumer has no way to tell it did not work.
+ */
 
 describe('token contract', () => {
   it('declares every documented token', () => {
@@ -4066,9 +4072,6 @@ Every custom property is prefixed `--manual-`. The reference's bare `--primary`,
     --manual-step-3: clamp(1.5rem, 1.2rem + 1.4cqi, 1.875rem);
     --manual-step-small: 0.875rem;
     --manual-step-tiny: 0.78rem;
-
-    --manual-breakpoint-narrow: 900px;
-    --manual-breakpoint-wide: 1200px;
 
     color-scheme: light;
   }
@@ -4864,6 +4867,13 @@ Expected: FAIL — `Failed to resolve import './scaffold'`.
 
 Templates as exported string constants in the same file (no separate `templates/` directory unless one grows past ~40 lines — `writeFileSync` of a template literal is simpler than a copy step that has to be taught about the bundler). It must `throw` rather than overwrite when `content/manifest.json` already exists. The `main.tsx` template is exactly the consumer surface from the spec, media glob included. The scaffolded content must pass `manual-kit validate` as written.
 
+**The generated `theme.css` carries `body { margin: 0; }`** alongside its token overrides. The
+library deliberately styles only its own subtree — `@layer base` is scoped to `.manual` rather
+than `body`, so an embedded shell cannot restyle its host — which means a *full-page* manual,
+which is what the scaffold produces, would otherwise keep the user agent's default body margin.
+The page's own reset belongs to the page. Assert it in the scaffold test alongside the existing
+no-`!important` and no-`@layer` checks.
+
 - [ ] **Step 4: Run the tests, then check the scaffold end to end**
 
 ```bash
@@ -5197,7 +5207,9 @@ cd ~/Projects/manual
 # string, and MissingMedia.tsx legitimately contains one.
 for f in $(grep -rl '[А-Яа-яӘәҚқҢңӨөҰұҮүҺһІі]' src --include='*.ts' --include='*.tsx' \
   | grep -v -e 'app/strings.ts' -e 'content/builtins.ts' -e 'cli/' -e '\.test\.' -e '__fixtures__'); do
-  sed -e 's|//.*||' -e '/^\s*\*/d' -e '/^\s*\/\*/d' "$f" \
+  # `[[:space:]]` rather than `\s`: BSD sed (macOS) does not understand `\s`,
+  # so the strip would silently do nothing and the grep would report comments.
+  sed -e 's|//.*||' -e '/^[[:space:]]*\*/d' -e '/^[[:space:]]*\/\*/d' "$f" \
     | grep -q '[А-Яа-яӘәҚқҢңӨөҰұҮүҺһІі]' && echo "CYRILLIC STRING LITERAL: $f"
 done
 # No locale hardcoded outside the two files allowed to know about ru/kk.
