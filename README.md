@@ -10,6 +10,16 @@
 оболочку, словарь блоков, поиск, роутинг, — а контент, бренд, набор локалей и
 собственные типы блоков остаются за конкретным руководством.
 
+## Требования
+
+- **Node.js 20 или новее** (проверено на 20, 22 и 26). Пакет собирается на
+  установке, поэтому нужен рабочий тулчейн, а не только рантайм.
+- **npm**. Других менеджеров пакетов не проверяли: `prepare`-скрипт и
+  разрешение git-зависимости у pnpm и yarn ведут себя иначе.
+- Больше ничего. Реестр, токен, доступ по SSH не нужны — репозиторий
+  публичный, и npm для публичного репозитория ходит по HTTPS, в том числе
+  в CI без ключей.
+
 ## Быстрый старт
 
 ```bash
@@ -28,6 +38,128 @@ npm run dev
 `src/main.tsx` (меньше тридцати строк), `src/theme.css` и одну главу на две
 локали (`ru`, `kk`) в `content/`. Дальше — писать контент и, при
 необходимости, донастраивать конфиг ниже.
+
+## Установка в существующий проект
+
+Если руководство уже есть (или вы хотите собрать его в своём проекте, а не из
+шаблона), пакет ставится как обычная зависимость:
+
+```bash
+npm i "github:sshakhan/manual#v0.1.2"
+```
+
+В `package.json` проекта должно быть **`"type": "module"`** — пакет только
+ESM, и без этого `vite.config.ts` грузится как CommonJS, а сборка падает на
+`This package is ESM only but it was tried to load by require`. Шаблон из
+`new-manual` это поле проставляет сам; в существующем проекте его легко
+забыть, и сообщение об ошибке указывает не туда.
+
+Версия — **точная, через тег**, а не ветка: `#main` будет молча меняться под
+ногами при каждом `npm i`, а API пакета ещё 0.x. Список тегов — `git ls-remote
+--tags https://github.com/sshakhan/manual.git`.
+
+Дальше нужны четыре файла. Минимальный рабочий набор (плюс `"type": "module"`
+в `package.json`, см. выше):
+
+```html
+<!-- index.html -->
+<!doctype html>
+<html lang="ru">
+  <head><meta charset="UTF-8" /><title>Руководство</title></head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+```
+
+```ts
+// vite.config.ts
+import { defineConfig } from 'vite';
+import { manualViteConfig } from '@evrika/manual-kit/vite';
+
+export default defineConfig(manualViteConfig());
+```
+
+```tsx
+// src/main.tsx
+import { renderManual } from '@evrika/manual-kit';
+import '@evrika/manual-kit/styles.css';
+import './theme.css';
+import manifest from '../content/manifest.json';
+
+renderManual({
+  root: document.getElementById('root')!,
+  brand: 'Название продукта',
+  manifest,
+  chapters: import.meta.glob('../content/*/*.json', { eager: true }),
+  media: import.meta.glob('../content/media/*', {
+    eager: true, query: '?url', import: 'default',
+  }),
+});
+```
+
+```css
+/* src/theme.css — без @layer: неслоёные правила старше любого слоя */
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+```
+
+**Оба `import.meta.glob` вызываются у вас, а не внутри пакета, и это
+обязательно.** Vite разрешает шаблон глоба относительно файла, который его
+вызвал, — из `node_modules/@evrika/manual-kit` он смотрел бы в саму
+библиотеку и не нашёл бы ваш `content/`. Заодно это то, что позволяет
+`vite-plugin-singlefile` вшить главы в один файл: страница по `file://` не
+может `fetch()` собственный JSON.
+
+`body { margin: 0 }` тоже обязателен: пакет намеренно ограничивает свой
+`@layer base` селектором `.manual`, чтобы встроенная в чужую страницу
+оболочка не меняла стили хоста, — поэтому сброс отступов страницы остаётся
+за страницей.
+
+Дальше — `content/manifest.json` и хотя бы одна глава; формат описан ниже в
+разделе «Контент». Проще всего подсмотреть готовый результат:
+`npx github:sshakhan/manual new-manual /tmp/example`.
+
+## Команды
+
+Скрипты, которые имеет смысл завести в `package.json` руководства:
+
+| Скрипт | Команда | Зачем |
+|---|---|---|
+| `dev` | `vite` | Дев-сервер с HMR. **Не заменяет проверку сборки** — см. ниже |
+| `build` | `vite build` | Один самодостаточный `dist/index.html` |
+| `validate` | `manual-kit validate --strict` | Схема, паритет локалей, ссылки, картинки. В CI — обязательно |
+| `schema` | `manual-kit schema` | Перегенерировать `content/schema.json` после обновления пакета |
+| `preview` | `vite preview` | Посмотреть собранное через HTTP |
+
+Ежедневный цикл — `npm run dev`, писать контент, перед коммитом `npm run
+validate`. Перед выкладкой — `npm run build` и **открыть `dist/index.html`
+двойным кликом**, через `file://`. Дев-сервер эту проверку не заменяет: у
+него нормальный origin, и он не покажет тот единственный класс поломок,
+ради которого сборка делается однофайловой.
+
+## Обновление версии пакета
+
+Зависимость закреплена тегом, поэтому `npm update` её не тронет — это
+осознанно. Чтобы поднять версию:
+
+```bash
+npm i "github:sshakhan/manual#v0.1.3"   # нужный тег
+npm run schema                          # если менялся набор блоков
+npm run validate
+npm run build
+```
+
+`npm run schema` нужен потому, что `content/schema.json` генерируется из
+реестра блоков пакета: после обновления он может разойтись с тем, что лежит
+в репозитории руководства. `validate` покажет расхождение, если забыть.
+
+Что изменилось между версиями — в истории тегов:
+`git log --oneline v0.1.1..v0.1.2` в клоне пакета.
 
 ## Конфигурация
 

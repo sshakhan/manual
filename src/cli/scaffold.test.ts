@@ -67,6 +67,14 @@ describe('scaffold', () => {
     }
   });
 
+  // The package is ESM only, so a consumer without this fails at `vite build`
+  // with an error that points at rolldown rather than at the missing field.
+  it('marks the generated package as ESM, which the shell requires', () => {
+    scaffold(dir);
+    const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'));
+    expect(pkg.type).toBe('module');
+  });
+
   it('wires validate and schema into the package scripts', () => {
     scaffold(dir);
     const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'));
