@@ -1,10 +1,17 @@
 {
   "name": "@evrika/manual-kit",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Reusable, themeable shell for Evrika product manuals",
   "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sshakhan/manual.git"
+  },
   "private": false,
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "files": [
     "dist"
   ],

@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import { VERSION } from '../index';
 
 /**
  * The payoff of the whole package: what a new manual actually costs.
@@ -110,7 +111,7 @@ function packageJson(): string {
         schema: 'manual-kit schema',
       },
       dependencies: {
-        '@evrika/manual-kit': '^0.1.0',
+        '@evrika/manual-kit': INSTALL_SOURCE,
         react: '^18.3.1',
         'react-dom': '^18.3.1',
       },
@@ -134,6 +135,16 @@ function packageJson(): string {
  * — scaffolding twice into the same directory is almost always a mistake, and
  * silently clobbering real content is the wrong failure mode for it.
  */
+/*
+ * Where a scaffolded manual installs the package from.
+ *
+ * A git URL rather than a registry range: this package is not published to a
+ * registry, so `^0.1.0` would 404 and a freshly scaffolded manual could not
+ * install itself. Pinned to this build's own VERSION so the two cannot drift —
+ * a scaffold always points at the version that generated it.
+ */
+const INSTALL_SOURCE = `github:sshakhan/manual#v${VERSION}`;
+
 export function scaffold(dir: string): string[] {
   const manifestPath = join(dir, 'content/manifest.json');
   if (existsSync(manifestPath)) {

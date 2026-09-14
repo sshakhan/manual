@@ -72,7 +72,9 @@ describe('scaffold', () => {
     const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'));
     expect(pkg.scripts.validate).toBe('manual-kit validate');
     expect(pkg.scripts.schema).toBe('manual-kit schema');
-    expect(pkg.dependencies['@evrika/manual-kit']).toBeDefined();
+    // A git URL, not a registry range: nothing is published to a registry, so
+    // `^0.1.0` would 404 and a scaffolded manual could not install itself.
+    expect(pkg.dependencies['@evrika/manual-kit']).toMatch(/^github:[\w-]+\/[\w-]+#v\d+\.\d+\.\d+$/);
   });
 
   it('refuses to overwrite a directory that already has a manual', () => {

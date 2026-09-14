@@ -1,4 +1,4 @@
-export const VERSION = '0.1.1';
+export const VERSION = '0.1.2';
 
 // The shell and its entry point.
 export { Manual } from './Manual';

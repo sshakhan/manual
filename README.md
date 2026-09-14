@@ -13,11 +13,16 @@
 ## Быстрый старт
 
 ```bash
-npx @evrika/manual-kit new-manual my-manual
+npx github:sshakhan/manual new-manual my-manual
 cd my-manual
 npm install
 npm run dev
 ```
+
+Устанавливается по git-URL, а не из реестра: пакет нигде не опубликован, и
+`npx @evrika/manual-kit` вернёт 404. Репозиторий публичный, так что ни ключей,
+ни доступа не требуется — в том числе в CI. Сгенерированный `package.json`
+сразу указывает на ту версию пакета, которой он создан.
 
 `new-manual` создаёт минимальную структуру: `index.html`, `vite.config.ts`,
 `src/main.tsx` (меньше тридцати строк), `src/theme.css` и одну главу на две
