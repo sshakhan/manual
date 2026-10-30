@@ -314,10 +314,14 @@
     }
   }
 
-  .locale-switch,
-  .theme-switch {
+  /*
+   * After both header buttons, so the theme and collapse controls stay on the
+   * brand's row when the locale switch wraps instead of being pushed down.
+   */
+  .locale-switch {
     display: flex;
     flex: 0 1 auto;
+    order: 3;
     gap: 2px;
     max-inline-size: 100%;
     padding: 2px;
@@ -330,22 +334,7 @@
     scrollbar-width: thin;
   }
 
-  /*
-   * After both header buttons, so the theme and collapse controls stay on the
-   * brand's row when the locale switch wraps instead of being pushed down.
-   */
-  .locale-switch {
-    order: 3;
-  }
-
-  /* Below the chapter list: a preference consulted occasionally, not per page. */
-  .theme-switch {
-    inline-size: fit-content;
-    margin-block-start: var(--manual-space-4);
-  }
-
-  .locale-button,
-  .theme-button {
+  .locale-button {
     flex: 0 0 auto;
     min-block-size: 30px;
     padding-block: var(--manual-space-1);
@@ -365,8 +354,7 @@
       outline-offset: 2px;
     }
 
-    &.locale-button-active,
-    &.theme-button-active {
+    &.locale-button-active {
       background: var(--manual-brand-strong);
       color: var(--manual-on-brand);
     }

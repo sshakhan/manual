@@ -3,20 +3,7 @@ import type { AnyBlock } from '../content/types';
 import type { ResolvedConfig } from '../config';
 import { routeHref, type Route } from './route';
 import { useManual } from './context';
-import type { ThemeMode } from './theme';
 import { SearchBox } from '../search/SearchBox';
-
-/**
- * Which label names each mode. Kept as a lookup rather than a chain of
- * conditionals so adding a mode is a type error until it has a string.
- */
-const THEME_LABELS = {
-  light: 'themeLight',
-  dark: 'themeDark',
-  system: 'themeSystem',
-} as const satisfies Record<ThemeMode, 'themeLight' | 'themeDark' | 'themeSystem'>;
-
-const THEME_MODES: readonly ThemeMode[] = ['light', 'dark', 'system'];
 
 /** Visual only: the button around it carries the accessible name. */
 function ThemeIcon({ mode }: { mode: 'light' | 'dark' }) {
@@ -65,8 +52,6 @@ export function Sidebar<L extends string, B extends AnyBlock>({
   route,
   onNavigate,
   onLocaleChange,
-  theme,
-  onThemeChange,
   effectiveTheme,
   onToggleTheme,
 }: {
@@ -75,16 +60,12 @@ export function Sidebar<L extends string, B extends AnyBlock>({
   onNavigate: (next: Route<L>) => void;
   onLocaleChange: (locale: L) => void;
   /**
-   * The full three-way setting. Both or neither. A consumer composing
-   * `<Sidebar>` by hand can omit the theme props and get no theme controls;
-   * `<Manual>` passes them only when `config.themeToggle` is on.
-   */
-  theme?: ThemeMode;
-  onThemeChange?: (theme: ThemeMode) => void;
-  /**
-   * What the screen is actually showing, which differs from `theme` when the
-   * setting is `'system'`. The header's one-click light/dark toggle needs it
-   * for a truthful icon and label.
+   * Both or neither. A consumer composing `<Sidebar>` by hand can omit them
+   * and get no theme control; `<Manual>` passes them only when
+   * `config.themeToggle` is on.
+   *
+   * `system` is still a valid config default, so the value here is the *shown*
+   * mode rather than the stored one: the moon/sun icon has to match the screen.
    */
   effectiveTheme?: 'light' | 'dark';
   onToggleTheme?: () => void;
@@ -173,24 +154,6 @@ export function Sidebar<L extends string, B extends AnyBlock>({
             </li>
           ))}
         </ol>
-
-        {theme !== undefined && onThemeChange !== undefined && (
-          <div className="theme-switch" role="group" aria-label={strings.themeGroup}>
-            {THEME_MODES.map((mode) => (
-              <button
-                key={mode}
-                type="button"
-                className={
-                  mode === theme ? 'theme-button theme-button-active' : 'theme-button'
-                }
-                aria-pressed={mode === theme}
-                onClick={() => onThemeChange(mode)}
-              >
-                {strings[THEME_LABELS[mode]]}
-              </button>
-            ))}
-          </div>
-        )}
 
         {config.slots.renderSidebarFooter?.(route)}
       </div>

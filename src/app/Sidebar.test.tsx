@@ -4,7 +4,6 @@ import userEvent from '@testing-library/user-event';
 import { Sidebar } from './Sidebar';
 import { resolveConfig } from '../config';
 import { ManualProvider } from './context';
-import type { ThemeMode } from './theme';
 import type { Chapter, Manifest } from '../content/types';
 import type { BuiltinBlock } from '../content/types';
 
@@ -26,8 +25,6 @@ const chapters = {
 function setup(
   overrides: Record<string, unknown> = {},
   themeProps: {
-    theme?: ThemeMode;
-    onThemeChange?: (theme: ThemeMode) => void;
     effectiveTheme?: 'light' | 'dark';
     onToggleTheme?: () => void;
   } = {},
@@ -98,25 +95,9 @@ describe('Sidebar', () => {
     expect(screen.getByRole('group', { name: 'Язык' })).toBeDefined();
   });
 
-  it('renders the theme switch with the current choice pressed', () => {
-    setup({}, { theme: 'dark', onThemeChange: vi.fn() });
-    expect(screen.getByRole('group', { name: 'Тема' })).toBeDefined();
-    expect(screen.getByRole('button', { name: 'Тёмная' }).getAttribute('aria-pressed'))
-      .toBe('true');
-    expect(screen.getByRole('button', { name: 'Светлая' }).getAttribute('aria-pressed'))
-      .toBe('false');
-  });
-
-  it('reports a theme choice', async () => {
-    const onThemeChange = vi.fn();
-    setup({}, { theme: 'light', onThemeChange });
-    await userEvent.click(screen.getByRole('button', { name: 'Системная' }));
-    expect(onThemeChange).toHaveBeenCalledWith('system');
-  });
-
-  it('omits the theme switch when no theme is supplied', () => {
+  it('omits the theme toggle when no theme is supplied', () => {
     setup();
-    expect(screen.queryByRole('group', { name: 'Тема' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Включить .* тему/ })).toBeNull();
   });
 
   it('offers a one-click light/dark toggle in the header', async () => {

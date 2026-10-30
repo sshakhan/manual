@@ -62,14 +62,6 @@ describe('Manual', () => {
     expect(document.documentElement.dataset.colorScheme).toBe('light');
   });
 
-  it('switches theme from the sidebar and remembers the choice', async () => {
-    render(<Manual config={config()} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Тёмная' }));
-
-    expect(document.documentElement.dataset.colorScheme).toBe('dark');
-    expect(window.localStorage.getItem('manual-kit:locale:eg-delivery:theme')).toBe('dark');
-  });
-
   it('flips light and dark from the one-click header toggle', async () => {
     render(<Manual config={config()} />);
 
@@ -88,11 +80,10 @@ describe('Manual', () => {
     expect(document.documentElement.dataset.colorScheme).toBe('dark');
   });
 
-  it('ignores a stored choice when the switch is disabled', () => {
+  it('ignores a stored choice when the toggle is disabled', () => {
     window.localStorage.setItem('manual-kit:locale:eg-delivery:theme', 'dark');
     render(<Manual config={config({ colorScheme: 'light', themeToggle: false })} />);
     expect(document.documentElement.dataset.colorScheme).toBe('light');
-    expect(screen.queryByRole('group', { name: 'Тема' })).toBeNull();
     expect(screen.queryByRole('button', { name: /Включить .* тему/ })).toBeNull();
   });
 

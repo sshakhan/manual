@@ -152,8 +152,6 @@ export function Manual<L extends string, B extends AnyBlock>({
             route={route}
             onNavigate={navigate}
             onLocaleChange={setLocale}
-            theme={config.themeToggle ? theme : undefined}
-            onThemeChange={config.themeToggle ? changeTheme : undefined}
             effectiveTheme={config.themeToggle ? effectiveTheme : undefined}
             onToggleTheme={config.themeToggle ? toggleTheme : undefined}
           />
