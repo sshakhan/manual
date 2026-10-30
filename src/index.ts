@@ -1,4 +1,4 @@
-export const VERSION = '0.1.2';
+export const VERSION = '0.2.0';
 
 // The shell and its entry point.
 export { Manual } from './Manual';
@@ -7,6 +7,7 @@ export { renderManual } from './renderManual';
 // Config.
 export { resolveConfig } from './config';
 export type { ManualConfig, ResolvedConfig, Slots } from './config';
+export type { ThemeMode } from './app/theme';
 
 // Routing.
 export type { RouteContext } from './app/route-types';

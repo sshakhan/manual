@@ -16,13 +16,30 @@
      to #019aac exactly. An earlier approximation landed on #1c92a0, which is a
      visibly greyer teal. */
     --manual-brand: oklch(62.8% 0.108 209.3);
-    --manual-brand-strong: color-mix(in oklab, var(--manual-brand) 82%, black);
+    /*
+     * Darker for light mode, lighter for dark mode. A *single* 82%-black mix
+     * fails on the dark surface — it lands at 3.26:1 against L=21%, below the
+     * 4.5:1 that 14px links and active labels need — while the light-mode
+     * value is fine (5.4:1). Mixing toward white in dark mode keeps the same
+     * relation to the surface in both palettes instead of mirroring the light
+     * value's contrast by accident.
+     */
+    --manual-brand-strong: light-dark(
+      color-mix(in oklab, var(--manual-brand) 82%, black),
+      color-mix(in oklab, var(--manual-brand) 55%, white)
+    );
+    /*
+     * Text drawn *on* a filled brand control. White on the raw brand teal is
+     * only 3.4:1, so filled controls use `--manual-brand-strong` as their
+     * background; this token then has to flip with it.
+     */
+    --manual-on-brand: light-dark(#fff, oklch(18% 0.02 245));
     /*
      * The mix percentage is tuned against a white light-mode surface (L=100%):
      * 12–16% of an L=60–76% accent barely moves the surface's own lightness,
      * so the tint reads as colour rather than as a grey wash. Against the dark
-     * surface (L=21%) the same percentage lands the four tints within about
-     * ten points of each other and of `--manual-surface-alt` (L=25%) — four
+     * surface (L=23%) the same percentage lands the four tints within about
+     * ten points of each other and of `--manual-surface-alt` (L=18%) — four
      * differently-meant callouts all reading as the same dark grey box. Raising
      * the percentage globally would blow out the light palette instead, so
      * each tint gets its own dark-mode percentage via `light-dark()`.
@@ -34,9 +51,15 @@
 
     --manual-text: light-dark(oklch(28% 0.02 245), oklch(93% 0.01 245));
     --manual-text-muted: light-dark(oklch(54% 0.02 245), oklch(70% 0.015 245));
-    --manual-surface: light-dark(#fff, oklch(21% 0.012 245));
-    --manual-surface-alt: light-dark(oklch(98% 0.004 210), oklch(25% 0.014 245));
-    --manual-line: light-dark(oklch(92% 0.008 210), oklch(32% 0.015 245));
+    /*
+     * Elevation reads the same way in both schemes: the chapter card is the
+     * foreground surface and the page behind it is recessive. An earlier dark
+     * palette had these the other way round (surface 21%, page 25%), so every
+     * card looked pressed into the page instead of raised above it.
+     */
+    --manual-surface: light-dark(#fff, oklch(23% 0.012 245));
+    --manual-surface-alt: light-dark(oklch(98% 0.004 210), oklch(18% 0.014 245));
+    --manual-line: light-dark(oklch(92% 0.008 210), oklch(34% 0.015 245));
 
     --manual-warning: oklch(76% 0.145 70);
     --manual-warning-tint: light-dark(
@@ -94,10 +117,12 @@
   }
 
   /*
-   * `Manual` sets this attribute from `config.colorScheme`. An attribute rather
-   * than a `prefers-color-scheme` query, so a consumer's choice beats the
-   * reader's OS — a product manual that flips to dark unasked is a surprise,
-   * and `'system'` is how a consumer opts into the OS following.
+   * `Manual` sets this attribute from `config.colorScheme`, or from the
+   * reader's choice in the theme switch. An attribute rather than a
+   * `prefers-color-scheme` query, so the consumer's default and the reader's
+   * explicit choice both beat the OS — a product manual that flips to dark
+   * unasked is a surprise, and `'system'` is how either of them opts into the
+   * OS following.
    */
   :root[data-color-scheme='dark'] { color-scheme: dark; }
   :root[data-color-scheme='system'] { color-scheme: light dark; }

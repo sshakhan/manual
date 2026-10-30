@@ -21,12 +21,22 @@ export interface UiStrings {
   closeSections: string;
   /** The missing-media placeholder. `{src}` is replaced with the named file. */
   mediaMissing: string;
+  /** Accessible name for the light/dark/system switch. */
+  themeGroup: string;
+  themeLight: string;
+  themeDark: string;
+  themeSystem: string;
+  /** Accessible name of the one-click header toggle, named for where it goes. */
+  themeSwitchToLight: string;
+  themeSwitchToDark: string;
 }
 
 export const UI_STRING_KEYS = [
   'languageGroup', 'searchPlaceholder', 'searchEmpty', 'searchHint',
   'fallbackNotice', 'chapterMissing', 'onThisPage', 'nextChapter',
   'previousChapter', 'openSections', 'closeSections', 'mediaMissing',
+  'themeGroup', 'themeLight', 'themeDark', 'themeSystem',
+  'themeSwitchToLight', 'themeSwitchToDark',
 ] as const satisfies readonly (keyof UiStrings)[];
 
 export const BUILTIN_STRINGS: Record<BuiltinLocale, UiStrings> = {
@@ -43,6 +53,12 @@ export const BUILTIN_STRINGS: Record<BuiltinLocale, UiStrings> = {
     openSections: 'Открыть разделы',
     closeSections: 'Закрыть разделы',
     mediaMissing: 'Нет файла: {src}',
+    themeGroup: 'Тема',
+    themeLight: 'Светлая',
+    themeDark: 'Тёмная',
+    themeSystem: 'Системная',
+    themeSwitchToLight: 'Включить светлую тему',
+    themeSwitchToDark: 'Включить тёмную тему',
   },
   kk: {
     languageGroup: 'Тіл',
@@ -57,5 +73,11 @@ export const BUILTIN_STRINGS: Record<BuiltinLocale, UiStrings> = {
     openSections: 'Бөлімдерді ашу',
     closeSections: 'Бөлімдерді жабу',
     mediaMissing: 'Файл жоқ: {src}',
+    themeGroup: 'Тақырып',
+    themeLight: 'Ашық',
+    themeDark: 'Қараңғы',
+    themeSystem: 'Жүйелік',
+    themeSwitchToLight: 'Ашық тақырыпты қосу',
+    themeSwitchToDark: 'Қараңғы тақырыпты қосу',
   },
 };

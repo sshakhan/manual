@@ -7,6 +7,7 @@ import { createContentSource, type ContentSource } from './content/source';
 import { defaultRegistry } from './blocks/builtin';
 import type { BlockRegistry } from './blocks/registry';
 import type { RouteContext } from './app/route-types';
+import { themeStorageKey, type ThemeMode } from './app/theme';
 
 export interface Slots<L extends string = string> {
   renderBrand?: (ctx: RouteContext<L>) => ReactNode;
@@ -33,7 +34,16 @@ export interface ManualConfig<
     strings?: { [K in L]?: Partial<UiStrings> };
   };
   blocks?: BlockRegistry<B>;
-  colorScheme?: 'light' | 'dark' | 'system';
+  /** The theme a first-time reader gets. Defaults to `'light'`. */
+  colorScheme?: ThemeMode;
+  /**
+   * Show the light/dark/system switch in the sidebar. Defaults to `true`.
+   *
+   * The switch never changes the theme by itself — it only lets a reader
+   * override `colorScheme`, which is why it does not violate the rule that a
+   * manual must not flip to dark unasked.
+   */
+  themeToggle?: boolean;
   search?: { enabled?: boolean; minQueryLength?: number; maxResults?: number };
   routing?: 'hash' | 'memory';
   /**
@@ -62,10 +72,12 @@ export interface ResolvedConfig<L extends string, B extends AnyBlock> {
   registry: BlockRegistry<B>;
   content: ContentSource<L, B>;
   resolveMedia: (src: string) => string | undefined;
-  colorScheme: 'light' | 'dark' | 'system';
+  colorScheme: ThemeMode;
+  themeToggle: boolean;
   search: { enabled: boolean; minQueryLength: number; maxResults: number };
   routing: 'hash' | 'memory';
   storageKey: string;
+  themeStorageKey: string;
   documentTitle: (ctx: RouteContext<L>) => string;
   slots: Slots<L>;
 }
@@ -158,6 +170,10 @@ export function resolveConfig<L extends string, B extends AnyBlock>(
 
   const brandText = typeof config.brand === 'string' ? config.brand : '';
   const content = createContentSource<L, B>(config.manifest, config.chapters, { fallback });
+  // Derived here rather than in `useRoute`, so every default lives in one
+  // place. A brand that is a ReactNode, empty, or pure punctuation slugs to
+  // nothing usable — those consumers pass `storageKey` themselves.
+  const storageKey = config.storageKey ?? `manual-kit:locale:${brandSlug(brandText)}`;
 
   return {
     root: config.root,
@@ -167,16 +183,15 @@ export function resolveConfig<L extends string, B extends AnyBlock>(
     content,
     resolveMedia: createMediaResolver(config.media),
     colorScheme: config.colorScheme ?? 'light',
+    themeToggle: config.themeToggle ?? true,
     search: {
       enabled: config.search?.enabled ?? true,
       minQueryLength: config.search?.minQueryLength ?? 2,
       maxResults: config.search?.maxResults ?? 30,
     },
     routing: config.routing ?? 'hash',
-    // Derived here rather than in `useRoute`, so every default lives in one
-    // place. A brand that is a ReactNode, empty, or pure punctuation slugs to
-    // nothing usable — those consumers pass `storageKey` themselves.
-    storageKey: config.storageKey ?? `manual-kit:locale:${brandSlug(brandText)}`,
+    storageKey,
+    themeStorageKey: themeStorageKey(storageKey),
     // The chapter first, the product second: a reader with nine manual tabs
     // open is distinguishing between chapters, not between products.
     documentTitle:

@@ -8,6 +8,7 @@ const manual = readFileSync(new URL('./manual.css', import.meta.url), 'utf8');
 /** Every token a consumer's theme.css is documented to be able to override. */
 const CONTRACT = [
   '--manual-brand', '--manual-brand-strong', '--manual-brand-tint',
+  '--manual-on-brand',
   '--manual-text', '--manual-text-muted', '--manual-surface',
   '--manual-surface-alt', '--manual-line',
   '--manual-warning', '--manual-warning-tint', '--manual-danger',
@@ -55,7 +56,14 @@ describe('token contract', () => {
     // `color-mix(...)` (see the dark-mode arithmetic in task 22's report), so
     // `color-mix(` no longer follows the colon directly.
     expect(tokens).toMatch(/--manual-brand-tint:[\s\S]*?color-mix\(/);
-    expect(tokens).toMatch(/--manual-brand-strong:\s*color-mix\(/);
+    // Both variants, because one mix cannot clear 4.5:1 on both surfaces.
+    expect(tokens).toMatch(/--manual-brand-strong:\s*light-dark\([\s\S]*?color-mix\(/);
+  });
+
+  it('keeps filled brand controls readable in both schemes', () => {
+    // Text on a filled control is a separate token from the fill: white on
+    // the raw brand teal is 3.4:1, and white on the dark-mode teal is worse.
+    expect(tokens).toMatch(/--manual-on-brand:\s*light-dark\(/);
   });
 
   it('types the length tokens with @property, so a bad override degrades', () => {

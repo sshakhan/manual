@@ -25,7 +25,14 @@
     font-family: var(--manual-font);
     font-size: var(--manual-step-0);
     line-height: 1.6;
+    /*
+     * `vh` on a phone is the *largest* viewport — the one including the
+     * browser's address bar — so a 100vh shell is taller than the screen and
+     * its last line hides under the chrome. `dvh` tracks the visible viewport;
+     * the `vh` above it is the fallback for engines without it.
+     */
     min-block-size: 100vh;
+    min-block-size: 100dvh;
   }
 
   /* A heading is read before it is looked at; let the wrapped lines be even. */
@@ -114,6 +121,7 @@
     flex: 0 0 var(--manual-sidebar-width);
     inline-size: var(--manual-sidebar-width);
     block-size: 100vh;
+    block-size: 100dvh;
     overflow-y: auto;
     padding-block: var(--manual-space-4) var(--manual-space-6);
     padding-inline: var(--manual-space-4);
@@ -124,34 +132,54 @@
       grid-area: sidebar;
     }
 
+    /*
+     * Two layout jobs at once. It is the page header, and when its body is
+     * open it is also a panel that must fit the viewport exactly. A column
+     * flex box makes the body consume whatever height the head leaves:
+     * `calc(100vh - 70px)` was guessed from a one-row header and clipped the
+     * list as soon as the brand or the locale switch wrapped.
+     */
     @container manual (inline-size < 900px) {
       position: sticky;
+      inset-block-start: 0;
       z-index: 30;
+      display: flex;
+      flex-direction: column;
       order: -2;
       flex: 0 0 auto;
       inline-size: 100%;
       block-size: auto;
       max-block-size: 100vh;
-      overflow: visible;
+      max-block-size: 100dvh;
+      overflow: hidden;
       padding-block: var(--manual-space-3);
       padding-inline: var(--manual-space-4);
       border-inline-end: 0;
       border-block-end: 1px solid var(--manual-line);
-      box-shadow: 0 2px 10px color-mix(in srgb, black 6%, transparent);
+      box-shadow: 0 2px 10px
+        light-dark(
+          color-mix(in srgb, black 6%, transparent),
+          color-mix(in srgb, black 45%, transparent)
+        );
     }
   }
 
   /*
-   * One row: brand, language switch, and (on narrow windows) the collapse
-   * toggle. `nowrap` plus the sizes below are what make «Evrika Cashier» and
-   * both language names fit a 320px column without wrapping mid-word —
-   * shrink the sidebar and they wrap again.
+   * Brand, the light/dark toggle, the language switch, and (on narrow
+   * windows) the collapse toggle.
+   *
+   * It wraps instead of insisting on one row. The number of locales is a
+   * consumer's choice, so "brand + every language name" has no fixed width:
+   * with three locales in a 320px column the switch used to run off the
+   * viewport — taking the page's horizontal scroll with it and pushing the
+   * collapse toggle out of reach entirely. The brand takes the free space of
+   * the first row (with an ellipsis if it must), the toggle stays on that row,
+   * and a switch that does not fit moves to its own row.
    */
   .sidebar-head {
     display: flex;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     align-items: center;
-    justify-content: space-between;
     gap: var(--manual-space-2);
     margin-block-end: var(--manual-space-4);
 
@@ -161,20 +189,69 @@
   }
 
   .sidebar-brand {
-    flex: 0 1 auto;
+    flex: 1 1 auto;
     min-inline-size: 0;
+    overflow: hidden;
+    color: var(--manual-brand-strong);
     font-size: var(--manual-step-small);
     font-weight: 800;
     line-height: 1.2;
+    text-overflow: ellipsis;
     white-space: nowrap;
-    color: var(--manual-brand);
     letter-spacing: 0.01em;
+  }
+
+  /*
+   * One-click light/dark. Deliberately in the header rather than only in the
+   * collapsed panel: changing theme is the first thing a reader does when the
+   * default is wrong for them, and on a phone the panel is one tap further
+   * away. The three-way setting (including "system") stays below the chapter
+   * list.
+   */
+  .theme-toggle {
+    display: grid;
+    flex: 0 0 auto;
+    order: 1;
+    place-items: center;
+    inline-size: 38px;
+    block-size: 34px;
+    padding: 0;
+    border: 1px solid var(--manual-line);
+    border-radius: var(--manual-radius);
+    background: var(--manual-surface);
+    color: var(--manual-brand-strong);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--manual-surface-alt);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--manual-brand);
+      outline-offset: 2px;
+    }
+
+    @container manual (inline-size < 900px) {
+      inline-size: 44px;
+      block-size: 44px;
+    }
+  }
+
+  .theme-toggle-icon {
+    inline-size: 18px;
+    block-size: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
   /* Hidden on desktop; the narrow container query below reveals it. */
   .sidebar-toggle {
     display: none;
     flex: 0 0 auto;
+    order: 2;
     inline-size: 38px;
     block-size: 34px;
     padding: 0;
@@ -190,6 +267,9 @@
 
     @container manual (inline-size < 900px) {
       display: block;
+      /* A thumb target, not a mouse target. */
+      inline-size: 44px;
+      block-size: 44px;
     }
   }
 
@@ -213,31 +293,61 @@
     transform: translateY(3px);
   }
 
-  /* Collapsed by default below the narrow breakpoint; `data-open` reveals it. */
+  /*
+   * Collapsed by default below the narrow breakpoint; `data-open` reveals it.
+   * When open it is the flex child that takes the height the header leaves,
+   * and only it scrolls — the header stays put above the list.
+   */
   .sidebar-body {
     @container manual (inline-size < 900px) {
       display: none;
 
       &[data-open='true'] {
         display: block;
-        max-block-size: calc(100vh - 70px);
+        flex: 1 1 auto;
+        min-block-size: 0;
         margin-block-start: var(--manual-space-3);
         overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
         overscroll-behavior: contain;
       }
     }
   }
 
-  .locale-switch {
+  .locale-switch,
+  .theme-switch {
     display: flex;
-    flex: 0 0 auto;
+    flex: 0 1 auto;
     gap: 2px;
+    max-inline-size: 100%;
     padding: 2px;
+    overflow-x: auto;
     background: var(--manual-surface-alt);
     border-radius: 999px;
+
+    /* `flex: 0 1 auto` above lets the row shrink; without this the buttons
+       refuse to and the switch pushes the sidebar wider than the viewport. */
+    scrollbar-width: thin;
   }
 
-  .locale-button {
+  /*
+   * After both header buttons, so the theme and collapse controls stay on the
+   * brand's row when the locale switch wraps instead of being pushed down.
+   */
+  .locale-switch {
+    order: 3;
+  }
+
+  /* Below the chapter list: a preference consulted occasionally, not per page. */
+  .theme-switch {
+    inline-size: fit-content;
+    margin-block-start: var(--manual-space-4);
+  }
+
+  .locale-button,
+  .theme-button {
+    flex: 0 0 auto;
+    min-block-size: 30px;
     padding-block: var(--manual-space-1);
     padding-inline: var(--manual-space-2);
     border: 0;
@@ -255,9 +365,15 @@
       outline-offset: 2px;
     }
 
-    &.locale-button-active {
-      background: var(--manual-brand);
-      color: white;
+    &.locale-button-active,
+    &.theme-button-active {
+      background: var(--manual-brand-strong);
+      color: var(--manual-on-brand);
+    }
+
+    @container manual (inline-size < 900px) {
+      min-block-size: 40px;
+      padding-inline: var(--manual-space-3);
     }
   }
 
@@ -270,6 +386,7 @@
 
   .search-input {
     inline-size: 100%;
+    min-block-size: 40px;
     padding-block: var(--manual-space-2);
     padding-inline: var(--manual-space-3);
     border: 1px solid var(--manual-line);
@@ -279,10 +396,23 @@
     font-family: inherit;
     font-size: var(--manual-step-small);
 
+    &::placeholder {
+      /* Browsers default this to a low-opacity currentColor, which is
+         unreadable once the surface is dark. */
+      color: var(--manual-text-muted);
+      opacity: 1;
+    }
+
     &:focus-visible {
       outline: 2px solid var(--manual-brand);
       outline-offset: -1px;
       background: var(--manual-surface);
+    }
+
+    @container manual (inline-size < 900px) {
+      /* 16px stops iOS Safari zooming the whole page on focus. */
+      min-block-size: 44px;
+      font-size: 1rem;
     }
   }
 
@@ -297,7 +427,11 @@
     background: var(--manual-surface);
     border: 1px solid var(--manual-line);
     border-radius: var(--manual-radius-lg);
-    box-shadow: 0 12px 28px color-mix(in srgb, black 12%, transparent);
+    box-shadow: 0 12px 28px
+      light-dark(
+        color-mix(in srgb, black 12%, transparent),
+        color-mix(in srgb, black 55%, transparent)
+      );
 
     @container manual (inline-size < 900px) {
       /* Absolute inside the sticky header: the dropdown must not push the page. */
@@ -337,7 +471,7 @@
 
   .search-hit-where {
     display: block;
-    color: var(--manual-brand);
+    color: var(--manual-brand-strong);
     font-size: var(--manual-step-tiny);
     font-weight: 700;
   }
@@ -383,12 +517,14 @@
       font-weight: 700;
 
       .toc-number {
-        color: var(--manual-brand);
+        color: var(--manual-brand-strong);
       }
     }
 
     @container manual (inline-size < 900px) {
-      padding-block: 11px;
+      min-block-size: 44px;
+      padding-block: var(--manual-space-2);
+      align-items: center;
     }
   }
 
@@ -432,6 +568,10 @@
       max-inline-size: 100%;
       padding: var(--manual-space-4);
     }
+
+    @container manual (inline-size < 600px) {
+      padding: var(--manual-space-3);
+    }
   }
 
   /* ---------- section rail ---------- */
@@ -449,6 +589,7 @@
     flex: 0 0 var(--manual-rail-width);
     inline-size: var(--manual-rail-width);
     max-block-size: 100vh;
+    max-block-size: 100dvh;
     overflow-y: auto;
     padding-block: var(--manual-space-6);
     padding-inline-end: var(--manual-space-4);
@@ -458,14 +599,27 @@
       position: static;
       inline-size: auto;
       max-block-size: none;
+      overflow: visible;
       padding-block-end: 0;
       padding-inline: var(--manual-space-6);
     }
 
+    /*
+     * In the one-column layout the rail sits *above* the chapter, and the
+     * parent is a flex column: the base `flex-basis` is no longer a width but
+     * a height. It is not reset by `inline-size: auto` above, so the rail
+     * reserved a blank 240px strip between itself and the chapter heading.
+     */
     @container manual (inline-size < 900px) {
+      align-self: stretch;
+      flex: 0 0 auto;
       order: -1;
       padding-block: var(--manual-space-4) 0;
       padding-inline: var(--manual-space-4);
+    }
+
+    @container manual (inline-size < 600px) {
+      padding-inline: var(--manual-space-3);
     }
   }
 
@@ -512,6 +666,19 @@
       flex-wrap: wrap;
       gap: var(--manual-space-1) var(--manual-space-4);
     }
+
+    /*
+     * A chapter with a dozen headings produced a dozen stacked rows above the
+     * text on a phone — navigation taller than the first screenful it was
+     * meant to help with. One swipeable row keeps the rail useful and short.
+     */
+    @container manual (inline-size < 900px) {
+      flex-wrap: nowrap;
+      padding-block-end: var(--manual-space-1);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+    }
   }
 
   .rail-link {
@@ -554,6 +721,8 @@
       margin-inline-start: 0;
       padding-inline-start: 0;
       border-inline-start: 0;
+      /* Pills on one row below 900px; harmless on the wrapped tablet row. */
+      white-space: nowrap;
 
       /*
        * Repeated rather than relied on cascade order: `&[data-level='3']`
@@ -569,6 +738,15 @@
         text-decoration: underline;
         text-underline-offset: 3px;
       }
+    }
+
+    /* The rail is a swipeable strip of pills on a phone: 44px is the smallest
+       target a thumb hits reliably. */
+    @container manual (inline-size < 900px) {
+      display: flex;
+      align-items: center;
+      min-block-size: 44px;
+      padding-block: 0;
     }
   }
 }
@@ -591,6 +769,10 @@
 
     @container manual (inline-size < 900px) {
       padding: var(--manual-space-4);
+    }
+
+    @container manual (inline-size < 600px) {
+      padding: var(--manual-space-3);
     }
   }
 
@@ -628,7 +810,13 @@
     scroll-margin-block-start: var(--manual-space-5);
 
     @container manual (inline-size < 900px) {
-      scroll-margin-block-start: 76px;
+      /*
+       * The sticky header is 44px tall plus its own padding; a locale switch
+       * that wraps (three or more languages on a phone) adds a second row.
+       * 120px clears the taller case — the cost is a little extra air under a
+       * one-row header, which reads better than a heading hidden beneath it.
+       */
+      scroll-margin-block-start: 120px;
     }
   }
 
@@ -649,7 +837,7 @@
     text-decoration: none;
 
     &:hover {
-      color: var(--manual-brand);
+      color: var(--manual-brand-strong);
     }
 
     &:focus-visible {
@@ -734,8 +922,8 @@
     flex: 0 0 24px;
     block-size: 24px;
     border-radius: 50%;
-    background: var(--manual-brand);
-    color: white;
+    background: var(--manual-brand-strong);
+    color: var(--manual-on-brand);
     font-size: var(--manual-step-tiny);
     font-weight: 700;
     line-height: 24px;
@@ -838,6 +1026,7 @@
   .table-wrap {
     margin: 0 0 var(--manual-space-4);
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .table {
@@ -864,7 +1053,8 @@
 
   .keys {
     display: flex;
-    gap: var(--manual-space-3);
+    flex-wrap: wrap;
+    gap: var(--manual-space-1) var(--manual-space-3);
     align-items: baseline;
     margin: 0 0 var(--manual-space-4);
   }
@@ -910,6 +1100,15 @@
     justify-content: space-between;
     gap: var(--manual-space-3);
     margin-block-start: var(--manual-space-4);
+
+    /*
+     * Side by side, two long chapter titles on a 320px screen each get about
+     * 120px of text width and wrap to four or five lines. Stacked, each gets
+     * the full column and the reading order (previous, then next) survives.
+     */
+    @container manual (inline-size < 600px) {
+      flex-direction: column;
+    }
   }
 
   .chapter-nav-link {
@@ -944,6 +1143,17 @@
     &.chapter-nav-next {
       text-align: end;
       margin-inline-start: auto;
+    }
+
+    @container manual (inline-size < 600px) {
+      max-inline-size: 100%;
+
+      &.chapter-nav-next {
+        /* Stacked, so "end" would align to the right edge of a full-width
+           card and read as a separate, unrelated block. */
+        margin-inline-start: 0;
+        text-align: start;
+      }
     }
   }
 

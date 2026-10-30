@@ -48,6 +48,17 @@ describe('resolveConfig defaults', () => {
     expect(resolved.routing).toBe('hash');
   });
 
+  it('offers the theme switch by default, keyed off the manual', () => {
+    const resolved = resolveConfig(base());
+    expect(resolved.themeToggle).toBe(true);
+    expect(resolved.themeStorageKey).toBe('manual-kit:locale:eg-delivery:theme');
+  });
+
+  it('can hide the theme switch', () => {
+    const resolved = resolveConfig({ ...base(), themeToggle: false });
+    expect(resolved.themeToggle).toBe(false);
+  });
+
   it('defaults search on, at two characters and thirty results', () => {
     expect(resolveConfig(base()).search).toEqual({
       enabled: true, minQueryLength: 2, maxResults: 30,
@@ -93,6 +104,9 @@ describe('resolveConfig overrides', () => {
       nextChapter: 'Next chapter', previousChapter: 'Previous chapter',
       openSections: 'Open sections', closeSections: 'Close sections',
       mediaMissing: 'Missing file: {src}',
+      themeGroup: 'Theme', themeLight: 'Light', themeDark: 'Dark', themeSystem: 'System',
+      themeSwitchToLight: 'Switch to light theme',
+      themeSwitchToDark: 'Switch to dark theme',
     };
     const resolved = resolveConfig({
       ...base(),

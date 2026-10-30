@@ -8,7 +8,7 @@
 ## 1. Установить пакет
 
 ```bash
-npm i @evrika/manual-kit@0.1.0
+npm i "github:sshakhan/manual#v0.2.0"
 ```
 
 Версия — **точная, не диапазон**: API пакета ещё 0.x, обратная совместимость

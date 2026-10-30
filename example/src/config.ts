@@ -69,12 +69,19 @@ export function exampleConfig(): Omit<ManualConfig<ExampleLocale, ExampleBlock>,
           openSections: 'Open sections',
           closeSections: 'Close sections',
           mediaMissing: 'Missing file: {src}',
+          themeGroup: 'Theme',
+          themeLight: 'Light',
+          themeDark: 'Dark',
+          themeSystem: 'System',
+          themeSwitchToLight: 'Switch to light theme',
+          themeSwitchToDark: 'Switch to dark theme',
         },
       },
     },
     blocks: registry,
-    // Left at 'light' — see the brief's Step 7. Flip to 'dark' to eyeball the
-    // dark palette, then revert; a consumer opts into 'dark' or 'system'.
+    // The first-run scheme only. The reader can switch in the sidebar, and
+    // their choice is remembered per manual; `'system'` would follow the OS
+    // until they do.
     colorScheme: 'light',
   };
 }

@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { Sidebar } from './Sidebar';
 import { resolveConfig } from '../config';
 import { ManualProvider } from './context';
+import type { ThemeMode } from './theme';
 import type { Chapter, Manifest } from '../content/types';
 import type { BuiltinBlock } from '../content/types';
 
@@ -22,7 +23,15 @@ const chapters = {
   '../content/ru/02-payment.json': { default: { id: 'payment', title: 'Оплата', blocks: [] } as Chapter<BuiltinBlock> },
 };
 
-function setup(overrides: Record<string, unknown> = {}) {
+function setup(
+  overrides: Record<string, unknown> = {},
+  themeProps: {
+    theme?: ThemeMode;
+    onThemeChange?: (theme: ThemeMode) => void;
+    effectiveTheme?: 'light' | 'dark';
+    onToggleTheme?: () => void;
+  } = {},
+) {
   const config = resolveConfig({
     root: document.createElement('div'), brand: 'EG Delivery', manifest, chapters, ...overrides,
   } as never);
@@ -41,6 +50,7 @@ function setup(overrides: Record<string, unknown> = {}) {
         route={{ locale: 'ru', chapterId: 'payment' }}
         onNavigate={onNavigate}
         onLocaleChange={onLocaleChange}
+        {...themeProps}
       />
     </ManualProvider>,
   );
@@ -86,6 +96,43 @@ describe('Sidebar', () => {
   it('groups the locale switch under the localised label', () => {
     setup();
     expect(screen.getByRole('group', { name: 'Язык' })).toBeDefined();
+  });
+
+  it('renders the theme switch with the current choice pressed', () => {
+    setup({}, { theme: 'dark', onThemeChange: vi.fn() });
+    expect(screen.getByRole('group', { name: 'Тема' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Тёмная' }).getAttribute('aria-pressed'))
+      .toBe('true');
+    expect(screen.getByRole('button', { name: 'Светлая' }).getAttribute('aria-pressed'))
+      .toBe('false');
+  });
+
+  it('reports a theme choice', async () => {
+    const onThemeChange = vi.fn();
+    setup({}, { theme: 'light', onThemeChange });
+    await userEvent.click(screen.getByRole('button', { name: 'Системная' }));
+    expect(onThemeChange).toHaveBeenCalledWith('system');
+  });
+
+  it('omits the theme switch when no theme is supplied', () => {
+    setup();
+    expect(screen.queryByRole('group', { name: 'Тема' })).toBeNull();
+  });
+
+  it('offers a one-click light/dark toggle in the header', async () => {
+    const onToggleTheme = vi.fn();
+    setup({}, { effectiveTheme: 'light', onToggleTheme });
+
+    const toggle = screen.getByRole('button', { name: 'Включить тёмную тему' });
+    await userEvent.click(toggle);
+    expect(onToggleTheme).toHaveBeenCalledTimes(1);
+  });
+
+  it('names the header toggle for its destination, not its current state', () => {
+    setup({}, { effectiveTheme: 'dark', onToggleTheme: vi.fn() });
+    expect(screen.getByRole('button', { name: 'Включить светлую тему' })).toBeDefined();
+    // The moon icon is decorative; the button's name is the whole affordance.
+    expect(screen.queryByRole('img')).toBeNull();
   });
 
   it('collapses and expands the body for a narrow window', async () => {

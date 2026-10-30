@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Manual } from './Manual';
 import { renderManual } from './renderManual';
 import { resolveConfig } from './config';
@@ -36,6 +37,7 @@ beforeEach(() => {
   window.location.hash = '';
   document.documentElement.removeAttribute('data-color-scheme');
   document.documentElement.lang = '';
+  window.localStorage.clear();
 });
 
 describe('Manual', () => {
@@ -58,6 +60,40 @@ describe('Manual', () => {
   it('defaults the colour scheme to light', () => {
     render(<Manual config={config()} />);
     expect(document.documentElement.dataset.colorScheme).toBe('light');
+  });
+
+  it('switches theme from the sidebar and remembers the choice', async () => {
+    render(<Manual config={config()} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Тёмная' }));
+
+    expect(document.documentElement.dataset.colorScheme).toBe('dark');
+    expect(window.localStorage.getItem('manual-kit:locale:eg-delivery:theme')).toBe('dark');
+  });
+
+  it('flips light and dark from the one-click header toggle', async () => {
+    render(<Manual config={config()} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Включить тёмную тему' }));
+    expect(document.documentElement.dataset.colorScheme).toBe('dark');
+    expect(window.localStorage.getItem('manual-kit:locale:eg-delivery:theme')).toBe('dark');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Включить светлую тему' }));
+    expect(document.documentElement.dataset.colorScheme).toBe('light');
+    expect(window.localStorage.getItem('manual-kit:locale:eg-delivery:theme')).toBe('light');
+  });
+
+  it('starts from a stored reader choice rather than the configured default', () => {
+    window.localStorage.setItem('manual-kit:locale:eg-delivery:theme', 'dark');
+    render(<Manual config={config()} />);
+    expect(document.documentElement.dataset.colorScheme).toBe('dark');
+  });
+
+  it('ignores a stored choice when the switch is disabled', () => {
+    window.localStorage.setItem('manual-kit:locale:eg-delivery:theme', 'dark');
+    render(<Manual config={config({ colorScheme: 'light', themeToggle: false })} />);
+    expect(document.documentElement.dataset.colorScheme).toBe('light');
+    expect(screen.queryByRole('group', { name: 'Тема' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Включить .* тему/ })).toBeNull();
   });
 
   it('syncs the document title and the html lang to the route', () => {
