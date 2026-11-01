@@ -8,7 +8,7 @@
 ## 1. Установить пакет
 
 ```bash
-npm i "github:sshakhan/manual#v0.2.1"
+npm i "github:sshakhan/manual#v0.3.0"
 ```
 
 Версия — **точная, не диапазон**: API пакета ещё 0.x, обратная совместимость

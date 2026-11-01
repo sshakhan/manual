@@ -247,6 +247,20 @@
     stroke-linejoin: round;
   }
 
+  /*
+   * A logo instead of the wordmark. The box grows to keep the header buttons
+   * pinned to the right, while `object-fit` keeps the logo's own aspect ratio
+   * and a height that fits the header.
+   */
+  .sidebar-brand-image {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+    block-size: 36px;
+    max-inline-size: 100%;
+    object-fit: contain;
+    object-position: left center;
+  }
+
   /* Hidden on desktop; the narrow container query below reveals it. */
   .sidebar-toggle {
     display: none;

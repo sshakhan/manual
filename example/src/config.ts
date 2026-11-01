@@ -1,6 +1,7 @@
 import { builtinBlocks, createRegistry } from '@evrika/manual-kit';
 import type { BuiltinBlock, Chapter, Manifest, ManualConfig } from '@evrika/manual-kit';
 import manifestJson from '../content/manifest.json';
+import brandLogo from './brand.svg';
 import { shortcutBlock, type ShortcutBlock } from './blocks/shortcut';
 
 /**
@@ -40,7 +41,10 @@ const registry = createRegistry<ExampleBlock>([...builtinBlocks, shortcutBlock])
  */
 export function exampleConfig(): Omit<ManualConfig<ExampleLocale, ExampleBlock>, 'root'> {
   return {
+    // Text and image together: the logo is what renders, while the text stays
+    // the document title, the image alt and the default storage-key source.
     brand: 'Example Manual',
+    brandImage: { src: brandLogo, alt: 'Example Manual' },
     manifest: manifestFor(manifestJson),
     chapters: import.meta.glob<{ default: Chapter<ExampleBlock> }>('../content/*/*.json', {
       eager: true,

@@ -66,6 +66,30 @@ describe('Sidebar', () => {
     expect(screen.getByAltText('EG')).toBeDefined();
   });
 
+  it('renders a logo instead of the text brand', () => {
+    setup({
+      brand: 'Acme Docs',
+      brandImage: { src: '/acme.svg', alt: 'Acme Docs' },
+    });
+    const logo = screen.getByRole('img', { name: 'Acme Docs' });
+    expect(logo.getAttribute('src')).toBe('/acme.svg');
+    expect(document.querySelector('.sidebar-brand')).toBeNull();
+  });
+
+  it('falls back to the brand text for the logo alt', () => {
+    setup({ brandImage: { src: '/acme.svg' } });
+    expect(screen.getByRole('img', { name: 'EG Delivery' })).toBeDefined();
+  });
+
+  it('lets the renderBrand slot win over a logo', () => {
+    setup({
+      brandImage: { src: '/acme.svg', alt: 'Acme' },
+      slots: { renderBrand: () => <span>Custom mark</span> },
+    });
+    expect(screen.getByText('Custom mark')).toBeDefined();
+    expect(screen.queryByRole('img', { name: 'Acme' })).toBeNull();
+  });
+
   it('lists every chapter, numbered, in manifest order', () => {
     setup();
     expect([...document.querySelectorAll('.toc-number')].map((n) => n.textContent)).toEqual(['1', '2']);

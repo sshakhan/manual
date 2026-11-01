@@ -88,9 +88,19 @@ export function Sidebar<L extends string, B extends AnyBlock>({
   return (
     <nav className="sidebar">
       <div className="sidebar-head">
-        {config.slots.renderBrand?.(route) ?? (
-          <span className="sidebar-brand">{config.brand}</span>
-        )}
+        {config.slots.renderBrand?.(route) ??
+          (config.brandImage ? (
+            <img
+              className="sidebar-brand-image"
+              src={config.brandImage.src}
+              alt={
+                config.brandImage.alt ??
+                (typeof config.brand === 'string' ? config.brand : '')
+              }
+            />
+          ) : (
+            <span className="sidebar-brand">{config.brand}</span>
+          ))}
 
         <div className="locale-switch" role="group" aria-label={strings.languageGroup}>
           {config.locales.list.map((locale) => (

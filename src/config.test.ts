@@ -48,6 +48,29 @@ describe('resolveConfig defaults', () => {
     expect(resolved.routing).toBe('hash');
   });
 
+  it('accepts an image-only brand and slugs it from the alt text', () => {
+    const resolved = resolveConfig({
+      ...base(),
+      brand: undefined,
+      brandImage: { src: '/acme-logo.svg', alt: 'Acme Docs' },
+    });
+    expect(resolved.brand).toBe('');
+    expect(resolved.brandImage).toEqual({ src: '/acme-logo.svg', alt: 'Acme Docs' });
+    expect(resolved.storageKey).toBe('manual-kit:locale:acme-docs');
+    expect(resolved.documentTitle({ locale: 'ru', chapterId: 'start' }))
+      .toBe('Начало — Acme Docs');
+  });
+
+  it('keeps the brand text authoritative when a logo is also given', () => {
+    const resolved = resolveConfig({
+      ...base(),
+      brandImage: { src: '/acme-logo.svg' },
+    });
+    expect(resolved.storageKey).toBe('manual-kit:locale:eg-delivery');
+    expect(resolved.documentTitle({ locale: 'ru', chapterId: 'start' }))
+      .toBe('Начало — EG Delivery');
+  });
+
   it('offers the theme toggle by default, keyed off the manual', () => {
     const resolved = resolveConfig(base());
     expect(resolved.themeToggle).toBe(true);
@@ -153,6 +176,16 @@ describe('resolveConfig rejections', () => {
   it('rejects an empty locale list', () => {
     expect(() => resolveConfig({ ...base(), locales: { list: [] } }))
       .toThrow(/at least one locale/i);
+  });
+
+  it('rejects a header with neither brand text nor a logo', () => {
+    expect(() => resolveConfig({ ...base(), brand: undefined }))
+      .toThrow(/no brand/i);
+  });
+
+  it('rejects a logo with an empty src', () => {
+    expect(() => resolveConfig({ ...base(), brandImage: { src: '  ' } }))
+      .toThrow(/brandImage\.src/i);
   });
 
   it('rejects a fallback that is not in the locale list', () => {

@@ -16,12 +16,38 @@ export interface Slots<L extends string = string> {
   renderSearchEmpty?: (ctx: RouteContext<L> & { query: string }) => ReactNode;
 }
 
+/**
+ * A logo for the sidebar header. `src` is anything an `<img>` accepts: a
+ * bundled asset URL, a data URI, or a path hosted next to the manual.
+ *
+ * `alt` is also used as the brand's text when `brand` is a ReactNode or
+ * omitted, so an image-only header still gets a useful document title and a
+ * per-manual storage key.
+ */
+export interface BrandImage {
+  src: string;
+  alt?: string;
+}
+
 export interface ManualConfig<
   L extends string = BuiltinLocale,
   B extends AnyBlock = BuiltinBlock,
 > {
   root: HTMLElement;
-  brand: string | ReactNode;
+  /**
+   * The header title. A plain string is also the source for the document
+   * title, the image alt fallback and the default `storageKey`.
+   *
+   * Omit it when `brandImage` is set. A ReactNode is still accepted for a
+   * fully custom mark; in that case pass `storageKey` explicitly.
+   */
+  brand?: string | ReactNode;
+  /**
+   * A logo shown instead of the brand text. When the two are given together,
+   * the image is what renders and the text remains the accessible name,
+   * document title and storage-key source.
+   */
+  brandImage?: BrandImage;
   manifest: Manifest<L>;
   /** `import.meta.glob('../content/*&#47;*.json', { eager: true })`, run by the consumer. */
   chapters: Record<string, { default: Chapter<B> }>;
@@ -48,12 +74,13 @@ export interface ManualConfig<
   routing?: 'hash' | 'memory';
   /**
    * Distinguishes this manual's remembered locale from another manual's in the
-   * same browser. Defaults to a slug of `brand` when that is a string.
+   * same browser. Defaults to a slug of the brand text, or of
+   * `brandImage.alt` when there is no text.
    *
-   * Set it explicitly when `brand` is a `ReactNode` — a JSX logo cannot be
-   * slugged, so every such manual would otherwise share one key and the two
-   * would fight over the reader's language, which is the exact bug the
-   * per-manual key exists to prevent.
+   * Set it explicitly when `brand` is a bare `ReactNode` with no alt — a JSX
+   * logo cannot be slugged, so every such manual would otherwise share one key
+   * and the two would fight over the reader's language, which is the exact bug
+   * the per-manual key exists to prevent.
    */
   storageKey?: string;
   document?: { title?: (ctx: RouteContext<L>) => string };
@@ -62,7 +89,9 @@ export interface ManualConfig<
 
 export interface ResolvedConfig<L extends string, B extends AnyBlock> {
   root: HTMLElement;
+  /** Never undefined after resolution; empty when the manual is image-only. */
   brand: string | ReactNode;
+  brandImage?: BrandImage;
   locales: {
     list: readonly L[];
     fallback: L;
@@ -118,6 +147,23 @@ export function resolveConfig<L extends string, B extends AnyBlock>(
     );
   }
 
+  const hasBrandText =
+    typeof config.brand === 'string'
+      ? config.brand.trim() !== ''
+      : config.brand != null;
+  if (!hasBrandText && !config.brandImage) {
+    throw new Error(
+      'manual-kit: the sidebar header has no brand. Set `brand` to the product ' +
+        'name (or a custom ReactNode), or set `brandImage` to a logo.',
+    );
+  }
+  if (config.brandImage && config.brandImage.src.trim() === '') {
+    throw new Error(
+      'manual-kit: brandImage.src is empty. Point it at a bundled asset URL or ' +
+        'a data URI.',
+    );
+  }
+
   const fallback = config.locales?.fallback ?? firstLocale;
   if (!list.includes(fallback)) {
     throw new Error(
@@ -168,16 +214,20 @@ export function resolveConfig<L extends string, B extends AnyBlock>(
     strings[locale] = merged as UiStrings;
   }
 
-  const brandText = typeof config.brand === 'string' ? config.brand : '';
+  const brandText =
+    typeof config.brand === 'string'
+      ? config.brand
+      : config.brandImage?.alt ?? '';
   const content = createContentSource<L, B>(config.manifest, config.chapters, { fallback });
   // Derived here rather than in `useRoute`, so every default lives in one
-  // place. A brand that is a ReactNode, empty, or pure punctuation slugs to
-  // nothing usable — those consumers pass `storageKey` themselves.
+  // place. An image-only header still has `alt` to slug, but a bare ReactNode
+  // with no alt slugs to nothing usable — those consumers pass `storageKey`.
   const storageKey = config.storageKey ?? `manual-kit:locale:${brandSlug(brandText)}`;
 
   return {
     root: config.root,
-    brand: config.brand,
+    brand: config.brand ?? '',
+    brandImage: config.brandImage,
     locales: { list, fallback, labels, strings },
     registry: config.blocks ?? (defaultRegistry as unknown as BlockRegistry<B>),
     content,

@@ -45,7 +45,7 @@ npm run dev
 шаблона), пакет ставится как обычная зависимость:
 
 ```bash
-npm i "github:sshakhan/manual#v0.2.1"
+npm i "github:sshakhan/manual#v0.3.0"
 ```
 
 В `package.json` проекта должно быть **`"type": "module"`** — пакет только
@@ -148,7 +148,7 @@ validate`. Перед выкладкой — `npm run build` и **открыть
 осознанно. Чтобы поднять версию:
 
 ```bash
-npm i "github:sshakhan/manual#v0.2.1"   # нужный тег
+npm i "github:sshakhan/manual#v0.3.0"   # нужный тег
 npm run schema                          # если менялся набор блоков
 npm run validate
 npm run build
@@ -159,7 +159,7 @@ npm run build
 в репозитории руководства. `validate` покажет расхождение, если забыть.
 
 Что изменилось между версиями — в истории тегов:
-`git log --oneline v0.1.3..v0.2.1` в клоне пакета.
+`git log --oneline v0.1.3..v0.3.0` в клоне пакета.
 
 ## Конфигурация
 
@@ -170,7 +170,8 @@ npm run build
 | Поле | Тип | По умолчанию | Когда задавать |
 |---|---|---|---|
 | `root` | `HTMLElement` | — (обязательное) | Всегда — элемент, в который монтируется оболочка |
-| `brand` | `string \| ReactNode` | — (обязательное) | Название продукта или произвольная разметка логотипа в шапке сайдбара |
+| `brand` | `string \| ReactNode` | — (обязательно, если нет `brandImage`) | Название продукта в шапке сайдбара. Строка также становится заголовком вкладки, `alt` для логотипа и источником `storageKey`; `ReactNode` — полностью своя разметка |
+| `brandImage` | `{ src: string; alt?: string }` | `undefined` | Логотип вместо текста. `src` — URL ассета, data URI или путь; `alt` подставляется в `alt` картинки, заголовок вкладки и `storageKey`, если `brand` не задан |
 | `manifest` | `Manifest<L>` | — (обязательное) | Всегда — `content/manifest.json` (версия, список локалей, порядок глав) |
 | `chapters` | `Record<string, { default: Chapter<B> }>` | — (обязательное) | Всегда — результат `import.meta.glob('../content/*/*.json', { eager: true })` |
 | `media` | `Record<string, string>` | `undefined` | Когда в контенте есть картинки/видео — результат `import.meta.glob('../content/media/*', { eager: true, query: '?url', import: 'default' })` |
@@ -185,12 +186,41 @@ npm run build
 | `search.minQueryLength` | `number` | `2` | Изменить минимальную длину запроса |
 | `search.maxResults` | `number` | `30` | Изменить число результатов поиска |
 | `routing` | `'hash' \| 'memory'` | `'hash'` | `'memory'` — для встраивания в тестовое окружение или в другой роутер, где хеш уже занят |
-| `storageKey` | `string` | slug от `brand`, когда `brand` — строка (иначе `'default'`) | **Обязательно**, если `brand` — `ReactNode`: JSX-логотип нельзя превратить в slug, и без явного ключа два таких руководства в одном браузере делят одну запись запомненного языка и спорят за неё |
+| `storageKey` | `string` | slug от `brand`, когда `brand` — строка, иначе от `brandImage.alt` (если оба пусты — `'default'`) | **Обязательно**, если `brand` — `ReactNode` без `alt`: JSX-логотип нельзя превратить в slug, и без явного ключа два таких руководства в одном браузере делят одну запись запомненного языка и спорят за неё |
 | `document.title` | `(ctx: RouteContext<L>) => string` | заголовок главы, затем `brand`, через ` — ` | Когда нужен другой формат заголовка вкладки |
 | `slots.renderBrand` | `(ctx) => ReactNode` | не задано | Заменить содержимое области бренда в сайдбаре |
 | `slots.renderSidebarFooter` | `(ctx) => ReactNode` | не задано | Добавить что-то под списком глав (например, ссылку на поддержку) |
 | `slots.renderChapterFooter` | `(ctx) => ReactNode` | не задано | Добавить что-то под текстом главы (например, «Полезно?») |
 | `slots.renderSearchEmpty` | `(ctx & { query }) => ReactNode` | не задано | Заменить сообщение о пустом результате поиска |
+
+### Текст или логотип в шапке
+
+Шапка не завязана на Evrika: `brand` — обычная строка, `brandImage` — любая
+картинка, которую понимает `<img>` (импортированный Vite-ассет, data URI,
+путь). Если заданы оба, рисуется логотип, а текст остаётся доступным именем,
+заголовком вкладки и источником `storageKey`:
+
+```tsx
+import logo from './brand.svg';
+
+renderManual({
+  brand: 'Acme Docs',
+  brandImage: { src: logo, alt: 'Acme Docs' },
+  // ...
+});
+```
+
+Только логотип — уберите `brand` и оставьте `alt`: он заменит текст и в
+заголовке вкладки, и в ключе запомненного языка:
+
+```tsx
+brandImage: { src: logo, alt: 'Acme Docs' },
+```
+
+Логотип вписывается в высоту шапки (`object-fit: contain`), поэтому подойдёт
+и квадратная иконка, и горизонтальный логотип. Для полностью произвольной
+разметки — например, логотип плюс подпись — остаётся
+`slots.renderBrand`; он побеждает и текст, и картинку.
 
 ## Контент
 
