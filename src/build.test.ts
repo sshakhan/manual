@@ -11,12 +11,36 @@ import { describe, expect, it } from 'vitest';
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
 describe('package exports', () => {
+  /*
+   * Read from the package rather than repeating the paths here: a flat
+   * `dist/vite.d.ts` used to be asserted, but the declaration build mirrors
+   * `src/` and the export map must be what points at the real files.
+   */
   it.each([
-    ['dist/index.js'], ['dist/index.d.ts'],
-    ['dist/styles.css'], ['dist/vite.js'], ['dist/vite.d.ts'],
-    ['dist/validate.js'], ['dist/validate.d.ts'],
+    pkg.main, pkg.types, 'dist/styles.css',
+    pkg.exports['./vite'].import, pkg.exports['./vite'].types,
+    pkg.exports['./validate'].import, pkg.exports['./validate'].types,
   ])('produces %s', (path) => {
     expect(existsSync(new URL(`../${path}`, import.meta.url)), `${path} — run npm run build`).toBe(true);
+  });
+
+  /*
+   * The failure this guards against shipped once: `rollupTypes: true`
+   * produced `dist/index.d.ts` containing exactly `export { }`, so every
+   * TypeScript consumer lost the whole public API while the JS build passed.
+   */
+  it('ships a non-empty declaration file for every types entry', () => {
+    const entries = [
+      pkg.types,
+      pkg.exports['./vite'].types,
+      pkg.exports['./validate'].types,
+    ];
+
+    for (const path of entries) {
+      const declaration = readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
+      expect(declaration.trim(), path).not.toBe('export { }');
+      expect(declaration.length, path).toBeGreaterThan(200);
+    }
   });
 
   it('does not bundle React', () => {

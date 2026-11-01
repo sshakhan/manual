@@ -6,10 +6,18 @@ import dts from 'vite-plugin-dts';
 export default defineConfig({
   plugins: [
     react(),
-    // rollupTypes: without it, dts mirrors src/'s directory tree (e.g.
-    // dist/vite/index.d.ts), but the lib build's flat entry names produce
-    // dist/vite.js — rollupTypes bundles each entry's types to match.
-    dts({ include: ['src'], exclude: ['src/**/*.test.*'], rollupTypes: true }),
+    /*
+     * `rollupTypes` is deliberately off. With it on, the main barrel — which
+     * re-exports from ~30 modules, including several `index.ts` files —
+     * silently produced an EMPTY `dist/index.d.ts` (`export { }`). Every
+     * consumer got no types at all, while the build stayed green.
+     *
+     * Without it the declaration tree mirrors `src/` (`dist/index.d.ts`,
+     * `dist/vite/index.d.ts`, `dist/cli/public.d.ts`), so the `exports` map
+     * points at those paths. `build.test.ts` checks that every advertised
+     * types entry exists and is non-empty.
+     */
+    dts({ include: ['src'], exclude: ['src/**/*.test.*'], rollupTypes: false }),
   ],
   build: {
     lib: {

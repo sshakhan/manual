@@ -45,7 +45,7 @@ npm run dev
 шаблона), пакет ставится как обычная зависимость:
 
 ```bash
-npm i "github:sshakhan/manual#v0.3.0"
+npm i "github:sshakhan/manual#v0.3.1"
 ```
 
 В `package.json` проекта должно быть **`"type": "module"`** — пакет только
@@ -148,7 +148,7 @@ validate`. Перед выкладкой — `npm run build` и **открыть
 осознанно. Чтобы поднять версию:
 
 ```bash
-npm i "github:sshakhan/manual#v0.3.0"   # нужный тег
+npm i "github:sshakhan/manual#v0.3.1"   # нужный тег
 npm run schema                          # если менялся набор блоков
 npm run validate
 npm run build
@@ -159,7 +159,7 @@ npm run build
 в репозитории руководства. `validate` покажет расхождение, если забыть.
 
 Что изменилось между версиями — в истории тегов:
-`git log --oneline v0.1.3..v0.3.0` в клоне пакета.
+`git log --oneline v0.1.3..v0.3.1` в клоне пакета.
 
 ## Конфигурация
 

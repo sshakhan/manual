@@ -1,6 +1,6 @@
 {
   "name": "@evrika/manual-kit",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Reusable, themeable shell for Evrika product manuals",
   "license": "UNLICENSED",
   "repository": {
@@ -27,11 +27,11 @@
     },
     "./styles.css": "./dist/styles.css",
     "./vite": {
-      "types": "./dist/vite.d.ts",
+      "types": "./dist/vite/index.d.ts",
       "import": "./dist/vite.js"
     },
     "./validate": {
-      "types": "./dist/validate.d.ts",
+      "types": "./dist/cli/public.d.ts",
       "import": "./dist/validate.js"
     },
     "./package.json": "./package.json"
