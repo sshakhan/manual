@@ -80,27 +80,38 @@ export function Sidebar<L extends string, B extends AnyBlock>({
    *
    * `scrollIntoView` is deliberately not used: it also scrolls the document,
    * so opening a chapter from the list would jump the article to the top of
-   * the viewport. This adjusts only the nav's `scrollTop`, and only when the
-   * active row is actually outside the visible part — a sidebar shorter than
-   * the viewport must not twitch on every navigation.
+   * the viewport. This adjusts only the current scroll container's
+   * `scrollTop`, and only when the active row is actually outside the visible
+   * part — a sidebar shorter than the viewport must not twitch on every
+   * navigation.
    *
-   * `open` is a dependency because on a phone the body is `display: none`
-   * until the panel is opened; its geometry is only measurable afterwards.
+   * On desktop the `<nav>` is the scroller. On a phone the nav is a fixed
+   * header with `overflow: hidden` and the collapsible body is the scroller,
+   * so scrolling the nav itself silently did nothing there.
+   *
+   * `open` is a dependency because the body is `display: none` until the
+   * panel is opened; its geometry is only measurable afterwards.
    */
   useEffect(() => {
     const nav = navRef.current;
     const active = nav?.querySelector<HTMLElement>('.toc-link-active');
     if (!nav || !active) return;
 
-    const navBox = nav.getBoundingClientRect();
-    const linkBox = active.getBoundingClientRect();
-    if (linkBox.top >= navBox.top && linkBox.bottom <= navBox.bottom) return;
+    const body = nav.querySelector<HTMLElement>('.sidebar-body');
+    const container =
+      body && body.scrollHeight > body.clientHeight + 1 ? body : nav;
 
-    nav.scrollTop =
-      nav.scrollTop +
+    const containerBox = container.getBoundingClientRect();
+    const linkBox = active.getBoundingClientRect();
+    if (linkBox.top >= containerBox.top && linkBox.bottom <= containerBox.bottom) {
+      return;
+    }
+
+    container.scrollTop =
+      container.scrollTop +
       linkBox.top -
-      navBox.top -
-      (nav.clientHeight - linkBox.height) / 2;
+      containerBox.top -
+      (container.clientHeight - linkBox.height) / 2;
   }, [route.chapterId, route.locale, open]);
 
   const themeToggleLabel =
