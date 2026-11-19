@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import type { AnyBlock, HeadingBlock } from '../content/types';
 import { routeHref, type Route } from './route';
 import { useManual } from './context';
@@ -35,12 +36,58 @@ export function OnThisPage<L extends string, B extends AnyBlock>({
   // this same component instance mounted — calling it only on some renders
   // would violate the rules of hooks.
   const strings = useManual().strings;
+  const railRef = useRef<HTMLElement | null>(null);
+
+  /*
+   * Follow the reader down the chapter without moving the page.
+   *
+   * On a wide window the rail is its own vertical scroll area; on a phone it
+   * becomes a single horizontal strip. Both are handled here, and both only
+   * move when the active item is actually outside the visible part — a rail
+   * that fits must not jump around while the reader scrolls the article.
+   */
+  useEffect(() => {
+    const rail = railRef.current;
+    if (!rail || !activeId) return;
+
+    const active = rail.querySelector<HTMLElement>('.rail-link-active');
+    if (!active) return;
+
+    if (rail.scrollHeight > rail.clientHeight + 1) {
+      const railBox = rail.getBoundingClientRect();
+      const linkBox = active.getBoundingClientRect();
+      const offscreen = linkBox.top < railBox.top || linkBox.bottom > railBox.bottom;
+
+      if (offscreen) {
+        rail.scrollTop =
+          rail.scrollTop +
+          linkBox.top -
+          railBox.top -
+          (rail.clientHeight - linkBox.height) / 2;
+      }
+    }
+
+    const list = active.closest<HTMLElement>('.rail-list');
+    if (list && list.scrollWidth > list.clientWidth + 1) {
+      const listBox = list.getBoundingClientRect();
+      const linkBox = active.getBoundingClientRect();
+      const offscreen = linkBox.left < listBox.left || linkBox.right > listBox.right;
+
+      if (offscreen) {
+        list.scrollLeft =
+          list.scrollLeft +
+          linkBox.left -
+          listBox.left -
+          (list.clientWidth - linkBox.width) / 2;
+      }
+    }
+  }, [activeId, route.chapterId, route.locale]);
 
   const headings = headingsOf(blocks);
   if (headings.length === 0) return null;
 
   return (
-    <aside className="rail">
+    <aside className="rail" ref={railRef}>
       <nav className="rail-inner" aria-label={strings.onThisPage}>
         <p className="rail-title">{strings.onThisPage}</p>
 
